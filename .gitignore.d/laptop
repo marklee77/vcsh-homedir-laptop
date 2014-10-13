@@ -1,0 +1,10 @@
+*
+!.config
+!.config/mr
+!.config/mr/config.d
+!.config/mr/config.d/laptop
+!.gitignore.d
+!.gitignore.d/laptop
+!.local
+!.local/bin
+!.local/bin/laptop-*
