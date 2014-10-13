@@ -1,14 +1,27 @@
 #!/bin/sh
-# after this is working, have it go straight to hibernate if minutes remaining
-# is less than threshold...
-SLEEPLENGTH=+1minute
+HIBERNATE_THRESHOLD_MINUTES=20
+SLEEP_LENGTH=+1minute
+
+BATTERY_REMAINING_CAPACITY=$(perl -ane 'print "$F[2]\n" if (/^remaining capacity:/);' /proc/acpi/battery/BAT0/state)
+BATTERY_PRESENT_RATE=$(perl -ane 'print "$F[2]\n" if (/^present rate:/);' /proc/acpi/battery/BAT0/state)
+BATTERY_MINUTES_REMAINING=$((${BATTERY_REMAINING_CAPACITY}*60/${BATTERY_PRESENT_RATE}))
+
+if [ ${BATTERY_MINUTES_REMAINING} -le ${HIBERNATE_THRESHOLD_MINUTES} ]; then
+    laptop-hibernate
+    exit 0
+fi
+
 WAKEALARM=/sys/class/rtc/rtc0/wakealarm
+
 rtcwake -m no -t $(date +%s -d${SLEEPLENGTH})
 laptop-suspend
+
 ALARM=$(cat ${WAKEALARM})
 NOW=$(date +%s)
+
 if [ -z ${ALARM} ] || [ ${NOW} -ge ${ALARM} ]; then
-    sleep 5 # system seems to have trouble with direct suspend->hibernate
+    xset dpms force off
+    sleep 5
     laptop-hibernate
 fi
 rtcwake -m no -t ${NOW}
