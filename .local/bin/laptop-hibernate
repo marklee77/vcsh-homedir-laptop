@@ -1,4 +1,4 @@
 #!/bin/sh
 laptop-lock
 dbus-send --system --print-reply --dest="org.freedesktop.UPower" \
-    /org/freedesktop/UPower org.freedesktop.UPower.Hibernate
+    /org/freedesktop/UPower org.freedesktop.UPower.Hibernate 2>&1 > /dev/null

@@ -1,6 +1,6 @@
 #!/bin/sh
 HIBERNATE_THRESHOLD_MINUTES=20
-SLEEP_LENGTH=+1minute
+SLEEP_LENGTH=+1hour
 
 BATTERY_REMAINING_CAPACITY=$(perl -ane 'print "$F[2]\n" if (/^remaining capacity:/);' /proc/acpi/battery/BAT0/state)
 BATTERY_PRESENT_RATE=$(perl -ane 'print "$F[2]\n" if (/^present rate:/);' /proc/acpi/battery/BAT0/state)
@@ -13,7 +13,7 @@ fi
 
 WAKEALARM=/sys/class/rtc/rtc0/wakealarm
 
-rtcwake -m no -t $(date +%s -d${SLEEPLENGTH})
+rtcwake -m no -t $(date +%s -d${SLEEP_LENGTH}) 2>&1 > /dev/null
 laptop-suspend
 
 ALARM=$(cat ${WAKEALARM})
@@ -24,4 +24,4 @@ if [ -z ${ALARM} ] || [ ${NOW} -ge ${ALARM} ]; then
     sleep 5
     laptop-hibernate
 fi
-rtcwake -m no -t ${NOW}
+rtcwake -m no -t $(date +%s -d+5seconds) 2>&1 > /dev/null
