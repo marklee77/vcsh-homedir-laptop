@@ -77,3 +77,4 @@ while [ 0 = 0 ]; do
 done
 
 ) 9>~/.laptop-powerd.lock
+
