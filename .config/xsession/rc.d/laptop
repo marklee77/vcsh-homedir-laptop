@@ -1,0 +1,8 @@
+# blank screen after 10 minutes of inactivity
+xset s 600 600
+
+# lock after 10 minutes and suspend after 20 minutes of inactivity if not 
+# plugged in
+xautolock -time 10 -locker laptop-lock \
+          -killtime 20 -killer "on_ac_power || laptop-smartsleep" \
+          -secure &
