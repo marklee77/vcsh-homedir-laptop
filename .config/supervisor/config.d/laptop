@@ -1,0 +1,3 @@
+[program:laptop-powerd]
+command=laptop-powerd
+autorestart=true

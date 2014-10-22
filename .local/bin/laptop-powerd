@@ -10,8 +10,6 @@ trap "rm ${LOCKFILE}; exit 1" SIGHUP SIGINT SIGTERM
 # power management scripts. There may be a better way to do this (systemd), but 
 # Ubuntu doesn't seem to want to make it easy.
 
-# FIXME: notify functions that can send to tmux if not in X?
-
 # only one copy of this should be running at a time...
 (
 if ! flock -n 9; then
