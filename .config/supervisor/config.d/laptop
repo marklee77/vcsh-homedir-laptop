@@ -1,3 +1,7 @@
 [program:laptop-powerd]
 command=laptop-powerd
 autorestart=true
+
+[program:xautolock]
+command=xautolock -time 10 -locker laptop-lock -killtime 20 -killer "on_ac_power || laptop-smartsleep" -secure
+autorestart=true
