@@ -1,0 +1,36 @@
+#!/bin/bash
+SCRIPTNAME="$(basename $0)"
+LOCKDIR="${HOME}/.local/var/lock/${SCRIPTNAME}"
+PIDFILE="${LOCKDIR}/PID"
+if mkdir ${LOCKDIR} &> /dev/null; then
+    trap "rm -rf ${LOCKDIR}" EXIT SIGHUP SIGINT SIGQUIT SIGTERM 
+    echo "$$" > ${PIDFILE}
+else
+    OTHERPID=$(cat ${PIDFILE})
+    if [ $? = 0 ] && ! kill -0 ${OTHERPID} &> /dev/null; then
+        # lock is stale, remove and try again...
+        rm -rf ${LOCKDIR}
+        exec "$0" "$@"
+    fi
+    echo "another instance of ${SCRIPTNAME} is currently running." >&2
+    exit 1
+fi
+
+# This is a pretty simple script to poll the system status and run some simple
+# power management scripts. There may be a better way to do this (systemd), but 
+# Ubuntu doesn't seem to want to make it easy.
+
+while true; do
+    acpi_listen | while read EVENT; do
+        if [ "${EVENT}" = "button/lid LID close" ]; then
+            laptop-lock
+            if ! on_ac_power; then
+                laptop-smartsleep
+
+            fi
+        fi
+    done
+
+    # Let's not use all of the CPU cycles on power management...
+    sleep 5
+done
