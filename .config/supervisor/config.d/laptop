@@ -1,5 +1,13 @@
-[program:laptop-powerd]
-command=laptop-powerd
+#[program:laptop-powerd]
+#command=laptop-powerd
+#autorestart=true
+
+[program:laptop-lidmond]
+command=laptop-lidmond
+autorestart=true
+
+[program:laptop-battmond]
+command=laptop-battmond
 autorestart=true
 
 [program:xautolock]
