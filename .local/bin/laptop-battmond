@@ -25,7 +25,6 @@ fi
 
 BATTERY_STATUS=ok
 while :; do
-    BATTERY_REMAINING_CAPACITY=$(perl -ane 'print "$F[2]\n" if (/^remaining capacity:/);' /proc/acpi/battery/BAT0/state)
     BATTERY_PRESENT_RATE=$(perl -ane 'print "$F[2]\n" if (/^present rate:/);' /proc/acpi/battery/BAT0/state)
 
     if on_ac_power || [ ${BATTERY_PRESENT_RATE} -le 0 ]; then
@@ -34,6 +33,7 @@ while :; do
 
     else
 
+        BATTERY_REMAINING_CAPACITY=$(perl -ane 'print "$F[2]\n" if (/^remaining capacity:/);' /proc/acpi/battery/BAT0/state)
         BATTERY_MINUTES_REMAINING=$((${BATTERY_REMAINING_CAPACITY}*60/${BATTERY_PRESENT_RATE}))
 
         if [ ${BATTERY_STATUS} = "ok" ] &&
@@ -63,12 +63,12 @@ while :; do
         fi
     fi
 
-    echo "BATTERY_STATUS: ${BATTERY_STATUS}"
-    echo "BATTERY_PRESENT_RATE: ${BATTERY_PRESENT_RATE}"
-    echo "BATTERY_REMAINING_CAPACITY: ${BATTERY_REMAINING_CAPACITY}"
-    echo "BATTERY_MINUTES_REMAINING: ${BATTERY_MINUTES_REMAINING}"
+    #echo "BATTERY_STATUS: ${BATTERY_STATUS}"
+    #echo "BATTERY_PRESENT_RATE: ${BATTERY_PRESENT_RATE}"
+    #echo "BATTERY_REMAINING_CAPACITY: ${BATTERY_REMAINING_CAPACITY}"
+    #echo "BATTERY_MINUTES_REMAINING: ${BATTERY_MINUTES_REMAINING}"
 
     # Let's not use all of the CPU cycles on power management...
     sleep 10
 
-done 2>&1 > ~/.local/var/log/${SCRIPTNAME}.log
+done #2>&1 > ~/.local/var/log/${SCRIPTNAME}.log
