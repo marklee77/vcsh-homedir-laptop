@@ -6,7 +6,7 @@ SCRIPTNAME="$(basename $0)"
 LOCKDIR="${HOME}/.local/var/lock/${SCRIPTNAME}"
 PIDFILE="${LOCKDIR}/PID"
 if mkdir ${LOCKDIR} &> /dev/null; then
-    trap "rm -rf ${LOCKDIR}" EXIT SIGHUP SIGINT SIGQUIT SIGTERM 
+    trap "rm -rf ${LOCKDIR}; exit 0" EXIT SIGINT SIGTERM SIGHUP 
     echo "$$" > ${PIDFILE}
 else
     OTHERPID=$(cat ${PIDFILE})
@@ -24,8 +24,7 @@ fi
 # Ubuntu doesn't seem to want to make it easy.
 
 BATTERY_STATUS=ok
-while [ 0 = 0 ]; do
-
+while true; do
     BATTERY_REMAINING_CAPACITY=$(perl -ane 'print "$F[2]\n" if (/^remaining capacity:/);' /proc/acpi/battery/BAT0/state)
     BATTERY_PRESENT_RATE=$(perl -ane 'print "$F[2]\n" if (/^present rate:/);' /proc/acpi/battery/BAT0/state)
 
@@ -70,6 +69,6 @@ while [ 0 = 0 ]; do
     echo "BATTERY_MINUTES_REMAINING: ${BATTERY_MINUTES_REMAINING}"
 
     # Let's not use all of the CPU cycles on power management...
-    sleep 30
+    sleep 10
 
-done 2>&1 > ~/.local/var/log/laptop-battmond.log
+done 2>&1 > ~/.local/var/log/${SCRIPTNAME}.log
