@@ -68,7 +68,6 @@ while [ 0 = 0 ]; do
     echo "BATTERY_PRESENT_RATE: ${BATTERY_PRESENT_RATE}"
     echo "BATTERY_REMAINING_CAPACITY: ${BATTERY_REMAINING_CAPACITY}"
     echo "BATTERY_MINUTES_REMAINING: ${BATTERY_MINUTES_REMAINING}"
-    notify-send "Notify Test"
 
     # Let's not use all of the CPU cycles on power management...
     sleep 30
