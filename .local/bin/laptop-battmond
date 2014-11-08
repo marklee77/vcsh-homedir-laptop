@@ -24,7 +24,7 @@ fi
 # Ubuntu doesn't seem to want to make it easy.
 
 BATTERY_STATUS=ok
-while true; do
+while :; do
     BATTERY_REMAINING_CAPACITY=$(perl -ane 'print "$F[2]\n" if (/^remaining capacity:/);' /proc/acpi/battery/BAT0/state)
     BATTERY_PRESENT_RATE=$(perl -ane 'print "$F[2]\n" if (/^present rate:/);' /proc/acpi/battery/BAT0/state)
 
