@@ -11,7 +11,6 @@ if mkdir ${LOCKDIR} &> /dev/null; then
 else
     OTHERPID=$(cat ${PIDFILE})
     OTHERNAME=$(basename $(ps aux | perl -ane "print \"\$F[11]\\n\" if (\$F[1] == ${OTHERPID});" 2>/dev/null) 2>/dev/null)
-    echo $OTHERNAME
     if [ -n "${OTHERPID}" ] && [ "${OTHERNAME}" != "${SCRIPTNAME}" ]; then
         # lock is stale, remove and try again...
         rm -rf ${LOCKDIR}
