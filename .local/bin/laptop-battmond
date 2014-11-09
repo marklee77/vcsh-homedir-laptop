@@ -10,7 +10,8 @@ if mkdir ${LOCKDIR} &> /dev/null; then
     echo "$$" > ${PIDFILE}
 else
     OTHERPID=$(cat ${PIDFILE})
-    if [ $? = 0 ] && ! kill -0 ${OTHERPID} &> /dev/null; then
+    OTHERNAME=echo $(ps aux | perl -ane "print \"\$F[11]\\n\" if (\$F[1] == ${OTHERPID});")
+    if [ -n "${OTHERPID}" ] && [ "${OTHERNAME}" != "${SCRIPTNAME}" ]; then
         # lock is stale, remove and try again...
         rm -rf ${LOCKDIR}
         exec "$0" "$@"
