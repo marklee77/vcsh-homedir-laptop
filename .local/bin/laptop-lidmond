@@ -22,18 +22,14 @@ fi
 # Ubuntu doesn't seem to want to make it easy.
 
 while true; do
-    if acpi_available; then
-        acpi_listen | while read EVENT; do
-            if [ "${EVENT}" = "button/lid LID close" ]; then
-                laptop-lock
-                if ! on_ac_power; then
-                    laptop-smartsleep
-
-                fi
+    acpi_listen | while read EVENT; do
+        if [ "${EVENT}" = "button/lid LID close" ]; then
+            laptop-lock
+            if ! on_ac_power; then
+                laptop-smartsleep
             fi
-        done
-    fi
-
+        fi
+    done
     # Let's not use all of the CPU cycles on power management...
-    sleep 30
+    sleep 1
 done
