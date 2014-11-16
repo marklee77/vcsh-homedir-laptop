@@ -1,5 +1,10 @@
-[program:laptop-powerd]
-command=laptop-powerd
+[program:laptop-lidmond]
+command=laptop-lidmond
+autorestart=true
+killasgroup=true
+
+[program:laptop-battmond]
+command=laptop-battmond
 autorestart=true
 
 [program:xautolock]
