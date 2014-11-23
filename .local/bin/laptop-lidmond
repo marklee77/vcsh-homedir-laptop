@@ -22,14 +22,13 @@ fi
 # Ubuntu doesn't seem to want to make it easy.
 
 while true; do
-    acpi_listen | while read EVENT; do
-        if [ "${EVENT}" = "button/lid LID close" ]; then
-            laptop-lock
-            if ! on_ac_power; then
-                laptop-smartsleep
-            fi
+    LID_STATE=$(perl -ane 'print "$F[1]\n";' /proc/acpi/button/lid/LID/state)
+    echo $LID_STATE
+    if [ "${LID_STATE}" = "closed" ]; then
+        laptop-lock
+        if ! on_ac_power; then
+            laptop-smartsleep
         fi
-    done
-    # Let's not use all of the CPU cycles on power management...
-    sleep 1
+    fi
+    sleep 5
 done
