@@ -1,2 +1,5 @@
 # blank screen after 10 minutes of inactivity
 xset s 600 600
+
+# set volume low and muted
+laptop-volume-set off 20%
