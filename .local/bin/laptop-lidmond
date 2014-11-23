@@ -23,7 +23,6 @@ fi
 
 while true; do
     LID_STATE=$(perl -ane 'print "$F[1]\n";' /proc/acpi/button/lid/LID/state)
-    echo $LID_STATE
     if [ "${LID_STATE}" = "closed" ]; then
         laptop-lock
         if ! on_ac_power; then
