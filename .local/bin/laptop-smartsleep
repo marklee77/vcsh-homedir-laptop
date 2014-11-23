@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 HIBERNATE_THRESHOLD_MINUTES=20
 SLEEP_LENGTH=+2hour
 
