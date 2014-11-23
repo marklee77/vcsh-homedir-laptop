@@ -18,4 +18,4 @@ else
 fi
 
 xset dpms force off
-i3lock -c 002b36 -e &> /dev/null
+i3lock -c 002b36 -d -e &> /dev/null
