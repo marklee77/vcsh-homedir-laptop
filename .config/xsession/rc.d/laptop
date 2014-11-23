@@ -1,8 +1,11 @@
 # blank screen after 10 minutes of inactivity
-xset s 600 600
+xset s 600
 
 # set backlight at 75%
 xbacklight -set 75
 
 # set volume muted
 laptop-volume-set off
+
+# bluetooth off
+bluetooth off
