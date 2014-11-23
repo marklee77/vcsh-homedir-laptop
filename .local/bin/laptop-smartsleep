@@ -1,6 +1,6 @@
 #!/bin/sh
 HIBERNATE_THRESHOLD_MINUTES=20
-SLEEP_LENGTH=+1hour
+SLEEP_LENGTH=+2hour
 
 BATTERY_REMAINING_CAPACITY=$(perl -ane 'print "$F[2]\n" if (/^remaining capacity:/);' /proc/acpi/battery/BAT0/state)
 BATTERY_PRESENT_RATE=$(perl -ane 'print "$F[2]\n" if (/^present rate:/);' /proc/acpi/battery/BAT0/state)
