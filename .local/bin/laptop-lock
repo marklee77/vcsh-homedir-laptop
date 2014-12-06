@@ -17,6 +17,4 @@ else
     exit 1
 fi
 
-xset dpms force off
-i3lock -c 002b36 -e -n &> /dev/null
-xset dpms force off
+i3lock -c 002b36 -d -I 5 -e -n &> /dev/null
