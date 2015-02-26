@@ -22,12 +22,16 @@ fi
 RUNDIR="${HOME}/.local/var/run/${SCRIPTNAME}"
 mkdir -p ${RUNDIR}
 CURRENT_LAYOUT=$(cat ${RUNDIR}/layout 2>/dev/null)
-i=0
-for LAYOUT in ${SCREEN_LAYOUTS[@]}; do
-    i=$((($i + 1) % ${#SCREEN_LAYOUTS[@]}))
-    [ "${LAYOUT}" = "${CURRENT_LAYOUT}" ] && break
-done
-NEW_LAYOUT=${SCREEN_LAYOUTS[$i]}
+
+if [ "$1" = "--nocycle" ]; then
+    NEW_LAYOUT="${CURRENT_LAYOUT}"
+else
+    i=0
+    for LAYOUT in ${SCREEN_LAYOUTS[@]}; do
+        i=$((($i + 1) % ${#SCREEN_LAYOUTS[@]}))
+        [ "${LAYOUT}" = "${CURRENT_LAYOUT}" ] && break
+    done
+    NEW_LAYOUT=${SCREEN_LAYOUTS[$i]}
+fi
 laptop-screen-set-layout ${NEW_LAYOUT}
 echo $NEW_LAYOUT > ${RUNDIR}/layout
-
