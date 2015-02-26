@@ -28,5 +28,6 @@ for LAYOUT in ${SCREEN_LAYOUTS[@]}; do
     [ "${LAYOUT}" = "${CURRENT_LAYOUT}" ] && break
 done
 NEW_LAYOUT=${SCREEN_LAYOUTS[$i]}
+laptop-screen-set-layout ${NEW_LAYOUT}
 echo $NEW_LAYOUT > ${RUNDIR}/layout
 
