@@ -1,7 +1,31 @@
 #!/bin/bash
+# FIXME: var names all in lowercase?
 laptop_screen=eDP1
-xrandr_command="/usr/bin/xrandr"
+xrandr="/usr/bin/xrandr"
 layout="$1"
+
+SCRIPTNAME="$(basename $0)"
+LOCKDIR="${HOME}/.local/var/lock/${SCRIPTNAME}"
+PIDFILE="${LOCKDIR}/PID"
+if mkdir ${LOCKDIR} &> /dev/null; then
+    trap "rm -rf ${LOCKDIR}; exit 0" EXIT SIGHUP SIGINT SIGQUIT SIGTERM
+    echo "$$" > ${PIDFILE}
+else
+    OTHERPID=$(cat ${PIDFILE})
+    OTHERNAME=$(basename $(ps aux | perl -ane "print \"\$F[11]\\n\" if (\$F[1] == ${OTHERPID});" 2>/dev/null) 2>/dev/null)
+    if [ -n "${OTHERPID}" ] && [ "${OTHERNAME}" != "${SCRIPTNAME}" ]; then
+        # lock is stale, remove and try again...
+        rm -rf ${LOCKDIR}
+        exec "$0" "$@"
+    fi
+    echo "another instance of ${SCRIPTNAME} is currently running." >&2
+    exit 1
+fi
+
+RUNDIR="${HOME}/.local/var/run/${SCRIPTNAME}"
+mkdir -p ${RUNDIR}
+previous_xrandr_command=$(cat ${RUNDIR}/xrandr_command 2>/dev/null)
+
 output_status_list=$(xrandr --current | perl -ane 'if (/(\S+)\s+((?:dis)?connected)\s*((?:primary)?)\s*([^\s(+]*)/) { print "\n" if $x; print "$1,$2,$3,$4,"; $x=1  } elsif ($x) { print "$F[0];" };')
 lid_state=$(perl -ane 'print $F[1]' /proc/acpi/button/lid/LID/state)
 
@@ -74,6 +98,11 @@ for output_status in $output_status_list; do
     [ -z "$output_options" ] || xrandr_options="$xrandr_options --output $output_name $output_options"
 done
 
-[ -z "$xrandr_options" ] || $xrandr_command $xrandr_options
+xrandr_command="$xrandr $xrandr_options"
+
+if [ -n "$xrandr_options" ] && [ "$xrandr_command" != "$previous_xrandr_command" ]; then
+    echo $xrandr_command > ${RUNDIR}/xrandr_command
+    $xrandr_command 
+fi    
 
 exit 0
