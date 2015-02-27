@@ -100,9 +100,13 @@ done
 
 xrandr_command="$xrandr $xrandr_options"
 
-if [ -n "$xrandr_options" ] && [ "$xrandr_command" != "$previous_xrandr_command" ]; then
-    echo $xrandr_command > ${RUNDIR}/xrandr_command
-    $xrandr_command 
+if [ -n "$xrandr_options" ]; then
+    if  [ "$xrandr_command" != "$previous_xrandr_command" ]; then
+        echo $xrandr_command > ${RUNDIR}/xrandr_command
+        $xrandr_command 
+    fi
+else
+    rm -f ${RUNDIR}/xrandr_command
 fi    
 
 exit 0
