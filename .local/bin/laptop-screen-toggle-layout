@@ -22,6 +22,7 @@ fi
 RUNDIR="${HOME}/.local/var/run/${SCRIPTNAME}"
 mkdir -p ${RUNDIR}
 CURRENT_LAYOUT=$(cat ${RUNDIR}/layout 2>/dev/null)
+[ -z "${CURRENT_LAYOUT}" ] && CURRENT_LAYOUT=${SCREEN_LAYOUTS[0]}
 
 if [ "$1" = "--nocycle" ]; then
     NEW_LAYOUT="${CURRENT_LAYOUT}"
