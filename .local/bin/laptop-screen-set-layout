@@ -7,7 +7,6 @@ laptop_screen_name=$(xrandr --current | \
                      perl -lane 'print $F[0] if $F[1] eq "connected"' | \
                      head -1)
 lid_state=$(perl -ane 'print $F[1]' /proc/acpi/button/lid/LID/state)
-lid_state=closed
 layout="$1"
 
 if [ -n "$layout" ]; then
@@ -126,18 +125,17 @@ for output_status in $output_status_list; do
     fi
 done
 
-xrandr_command="$xrandr$xrandr_options"
-
 rundir="${HOME}/.local/var/run/${scriptname}"
-mkdir -p ${rundir}
 
 if [ -n "$xrandr_options" ]; then
+    mkdir -p ${rundir}
+    xrandr_command="$xrandr$xrandr_options"
     previous_xrandr_command=$(cat ${rundir}/xrandr_command 2>/dev/null)
     if  [ "$xrandr_command" != "$previous_xrandr_command" ]; then
         echo "$xrandr_command" > ${rundir}/xrandr_command
         $xrandr_command 
     fi
-else
+elif [ -f "${rundir}/xrandr_command" ]; then
     rm -f ${rundir}/xrandr_command
 fi    
 
