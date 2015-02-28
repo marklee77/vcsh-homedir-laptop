@@ -1,47 +1,18 @@
 #!/bin/bash
-# FIXME: var names all in lowercase?
-laptop_screen=eDP1
 xrandr="/usr/bin/xrandr"
-layout="$1"
 
-SCRIPTNAME="$(basename $0)"
-LOCKDIR="${HOME}/.local/var/lock/${SCRIPTNAME}"
-PIDFILE="${LOCKDIR}/PID"
-if mkdir ${LOCKDIR} &> /dev/null; then
-    trap "rm -rf ${LOCKDIR}; exit 0" EXIT SIGHUP SIGINT SIGQUIT SIGTERM
-    echo "$$" > ${PIDFILE}
-else
-    OTHERPID=$(cat ${PIDFILE})
-    OTHERNAME=$(basename $(ps aux | perl -ane "print \"\$F[11]\\n\" if (\$F[1] == ${OTHERPID});" 2>/dev/null) 2>/dev/null)
-    if [ -n "${OTHERPID}" ] && [ "${OTHERNAME}" != "${SCRIPTNAME}" ]; then
-        # lock is stale, remove and try again...
-        rm -rf ${LOCKDIR}
-        exec "$0" "$@"
-    fi
-    echo "another instance of ${SCRIPTNAME} is currently running." >&2
-    exit 1
-fi
-
-RUNDIR="${HOME}/.local/var/run/${SCRIPTNAME}"
-mkdir -p ${RUNDIR}
-previous_xrandr_command=$(cat ${RUNDIR}/xrandr_command 2>/dev/null)
-
-output_status_list=$(xrandr --current | perl -ane 'if (/(\S+)\s+((?:dis)?connected)\s*((?:primary)?)\s*([^\s(+]*)/) { print "\n" if $x; print "$1,$2,$3,$4,"; $x=1  } elsif ($x) { print "$F[0];" };')
+# laptop_screen_name defaults to first connected output, but could be set
+# explicitly
+laptop_screen_name=$(xrandr --current | \
+                     perl -lane 'print $F[0] if $F[1] eq "connected"' | \
+                     head -1)
 lid_state=$(perl -ane 'print $F[1]' /proc/acpi/button/lid/LID/state)
+lid_state=closed
+layout="$1"
 
 if [ -n "$layout" ]; then
     case $layout in 
-        mirror)
-        ;;
-        left-of)
-        ;;
-        right-of)
-        ;;
-        above)
-        ;;
-        below)
-        ;;
-        off)
+        mirror|left-of|right-of|above|below|off)
         ;;
         *)
         echo -e "usage:\n$0 [mirror|left-of|right-of|above|below|off]"
@@ -50,63 +21,124 @@ if [ -n "$layout" ]; then
     esac
 fi
 
+# make sure that only one instance of the process is trying to configure the
+# screen at a time.
+scriptname="$(basename $0)"
+lockdir="${HOME}/.local/var/lock/${scriptname}"
+pidfile="${lockdir}/PID"
+if mkdir ${lockdir} &> /dev/null; then
+    trap "rm -rf ${lockdir}; exit 0" EXIT SIGHUP SIGINT SIGQUIT SIGTERM
+    echo "$$" > ${pidfile}
+else
+    otherpid=$(cat ${pidfile})
+    othername=$(basename $(ps aux | \
+                           perl -lane "print \"\$F[11]\" \
+                                       if \$F[1] == ${otherpid}" 2>/dev/null) \
+                           2>/dev/null)
+    if [ -n "${otherpid}" ] && [ "${othername}" != "${scriptname}" ]; then
+        # lock is stale, remove and try again...
+        rm -rf ${lockdir}
+        exec "$0" "$@"
+    fi
+    echo "another instance of ${scriptname} is currently running." >&2
+    exit 1
+fi
+
+output_status_list=$(xrandr --current | perl -ane 'if (/(\S+)\s+((?:dis)?connected)\s*((?:primary)?)\s*([^\s(+]*)/) { print "\n$1,$2,$3,$4,"; } elsif (/^\s+(\d+x\d+)\s+[0-9.*]+(\+?)/) { print "$1$2;" };')
+
 global_available_modes=""
-num_connected_outputs=0
+num_active_outputs=0
 for output_status in $output_status_list; do
     IFS="," read output_name output_state output_primary output_mode output_available_modes <<< "${output_status}"
-    if [ -n "${output_available_modes}" ] && [ "$output_state" = "connected" ]; then
-        if [ -z "${global_available_modes}" ]; then
-            global_available_modes=$(tr ';' '\n' <<< $output_available_modes | sort)
+    if [ -n "${output_available_modes}" ] && \
+       [ "$output_state" = "connected" ] && \
+       ([ "$output_name" != "$laptop_screen_name" ] || \
+        [ "$lid_state" = "open" ]); then
+        num_active_outputs=$(($num_active_outputs+1))
+        if [ $num_active_outputs -eq 1 ]; then
+            global_available_modes=${output_available_modes//[;+]/ }
         else
-            global_available_modes=$(comm -12 <(echo "$global_available_modes") <(tr ';' '\n' <<< $output_available_modes | sort))
+            temp_available_modes=""
+            for gmode in $global_available_modes; do
+                for omode in ${output_available_modes//[;+]/ }; do
+                    if [ "$omode" = "$gmode" ]; then
+                        temp_available_modes="$temp_available_modes $omode"
+                        break
+                    fi
+                done
+            done
+            global_available_modes=$temp_available_modes
         fi
     fi
-    [ "$output_state" = "connected" ] && num_connected_outputs=$(($num_connected_outputs+1))
 done
-global_maximum_mode=$(for mode in $global_available_modes; do echo "$(($(tr 'x' '*' <<< $mode))) $mode"; done | sort -n | cut -d' ' -f2 | tail -1)
+global_preferred_mode=$(perl -lane 'print $F[0]' <<< $global_available_modes)
 
 xrandr_options=""
+previous_connected_output=""
 for output_status in $output_status_list; do
     IFS="," read output_name output_state output_primary output_mode output_available_modes <<< "${output_status}"
-    output_desired_mode=$(echo "$output_available_modes" | tr ';' '\n' | head -1)
+    output_desired_mode=$(perl -lane 'if (/(\d+x\d+)\+/) { print $1; } else { print $F[0]; }' <<< ${output_available_modes//;/ })
     output_options=""
-    if [ "$output_state" = "connected" ] && ([ "$output_name" != "$laptop_screen" ] || [ "$lid_state" = "open" ]); then
-        if [ "$layout" = "mirror" ]; then
-            output_desired_mode=$global_maximum_mode
-            if [ -n "$previous_connected_output" ]; then
-                output_options="--same-as $previous_connected_output"
-            fi
-        elif [ "$layout" = "off" ]; then
-            if [ -n "$previous_connected_output" ]; then
-                output_options="--off"
-            fi
-        elif [ -n "$layout" ]; then
-            if [ -n "$previous_connected_output" ]; then
-                output_options="--$layout $previous_connected_output"
+    if [ "$output_state" = "connected" ] && ([ "$output_name" != "$laptop_screen_name" ] || [ "$lid_state" = "open" ] || [ $num_active_outputs -eq 0 ]); then
+        if [ -z "$output_primary" ] && [ -z "$previous_connected_output" ]; then
+            output_options="--primary"
+        fi
+        if [ $num_active_outputs -gt 1 ]; then
+            if [ "$layout" = "mirror" ]; then
+                if [ -n "$global_preferred_mode" ]; then 
+                    output_desired_mode=$global_preferred_mode
+                fi
+                if [ -n "$previous_connected_output" ]; then
+                    output_options="--same-as $previous_connected_output"
+                fi
+            elif [ "$layout" = "off" ]; then
+                if [ -n "$output_mode" ] && [ -n "$previous_connected_output" ]; then
+                    output_options="--off"
+                fi
+            elif [ -n "$layout" ]; then
+                if [ -n "$previous_connected_output" ]; then
+                    output_options="--$layout $previous_connected_output"
+                fi
             fi
         fi
         if [ "$layout" != "off" ]; then
             if [ "$output_mode" != "$output_desired_mode" ]; then
-                output_options="$output_options --mode $output_desired_mode"
+                if [ -n "$output_desired_mode" ]; then
+                    output_options="--mode $output_desired_mode $output_options"
+                fi
+                if [ -z "$output_mode" ]; then
+                    output_options="--auto $output_options"
+                fi
             fi
-            [ -z "$output_options" ] || output_options="$output_options --auto"
         fi
         previous_connected_output=$output_name
-    elif [ -n "$output_mode" ] && ([ "$output_name" != "$laptop_screen" ] || [ $num_connected_outputs -gt 1 ]); then
-        output_options="--off"
+    elif [ -n "$output_mode" ]; then
+        if [ "$output_name" = "$laptop_screen_name" ]; then
+            if [ $num_active_outputs -gt 0 ]; then
+                output_options="--off"
+            fi
+        else
+            output_options="--auto"
+        fi
     fi
-    [ -z "$output_options" ] || xrandr_options="$xrandr_options --output $output_name $output_options"
+    if [ -n "$output_options" ]; then 
+        xrandr_options="$xrandr_options --output $output_name $output_options"
+    fi
 done
 
-xrandr_command="$xrandr $xrandr_options"
+xrandr_command="$xrandr$xrandr_options"
+
+rundir="${HOME}/.local/var/run/${scriptname}"
+mkdir -p ${rundir}
 
 if [ -n "$xrandr_options" ]; then
+    previous_xrandr_command=$(cat ${rundir}/xrandr_command 2>/dev/null)
     if  [ "$xrandr_command" != "$previous_xrandr_command" ]; then
-        echo $xrandr_command > ${RUNDIR}/xrandr_command
+        echo "$xrandr_command" > ${rundir}/xrandr_command
         $xrandr_command 
     fi
 else
-    rm -f ${RUNDIR}/xrandr_command
+    rm -f ${rundir}/xrandr_command
 fi    
 
 exit 0
