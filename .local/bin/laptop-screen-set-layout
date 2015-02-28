@@ -56,12 +56,9 @@ for output_status in $output_status_list; do
     IFS="," read output_name output_state output_primary output_mode output_available_modes <<< "${output_status}"
     if [ -n "${output_available_modes}" ] && [ "$output_state" = "connected" ]; then
         if [ -z "${global_available_modes}" ]; then
-            global_available_modes=$(echo -n $output_available_modes | tr ';' '\n' | sort)
-            echo $global_available_modes
             global_available_modes=$(tr ';' '\n' <<< $output_available_modes | sort)
-            echo $global_available_modes
         else
-            global_available_modes=$(comm -12 <(echo "$global_available_modes") <(echo $output_available_modes | tr ';' '\n' | sort))
+            global_available_modes=$(comm -12 <(echo "$global_available_modes") <(tr ';' '\n' <<< $output_available_modes | sort))
         fi
     fi
     [ "$output_state" = "connected" ] && num_connected_outputs=$(($num_connected_outputs+1))
