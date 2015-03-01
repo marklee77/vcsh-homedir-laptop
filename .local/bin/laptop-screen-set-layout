@@ -100,7 +100,7 @@ for output_status in $output_status_list; do
                 fi
             fi
         fi
-        if [ "$layout" != "off" ] || [ "$output_name" = "$laptop_screen_name" ]; then
+        if [ "$layout" != "off" ] || [ -z "$previous_connected_output" ]; then
             if [ "$output_mode" != "$output_desired_mode" ]; then
                 if [ -n "$output_desired_mode" ]; then
                     output_options="--mode $output_desired_mode $output_options"
@@ -113,9 +113,7 @@ for output_status in $output_status_list; do
         previous_connected_output=$output_name
     elif [ -n "$output_mode" ]; then
         if [ "$output_name" = "$laptop_screen_name" ]; then
-            if [ $num_active_outputs -gt 0 ]; then
-                output_options="--off"
-            fi
+            output_options="--off"
         else
             output_options="--auto"
         fi
