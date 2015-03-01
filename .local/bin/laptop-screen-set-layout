@@ -126,7 +126,6 @@ for output_status in $output_status_list; do
 done
 
 rundir="${HOME}/.local/var/run/${scriptname}"
-
 if [ -n "$xrandr_options" ]; then
     mkdir -p ${rundir}
     xrandr_command="$xrandr$xrandr_options"
