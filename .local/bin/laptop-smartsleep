@@ -20,8 +20,9 @@ else
     exit 1
 fi
 
-BATTERY_REMAINING_CAPACITY=$(perl -ane 'print "$F[2]\n" if (/^remaining capacity:/);' /proc/acpi/battery/BAT0/state)
-BATTERY_PRESENT_RATE=$(perl -ane 'print "$F[2]\n" if (/^present rate:/);' /proc/acpi/battery/BAT0/state)
+battery=BAT0
+BATTERY_REMAINING_CAPACITY=$(cat /sys/class/power_supply/${battery}/charge_now)
+BATTERY_PRESENT_RATE=$(cat /sys/class/power_supply/${battery}/current_now)
 BATTERY_MINUTES_REMAINING=$((${BATTERY_REMAINING_CAPACITY}*60/${BATTERY_PRESENT_RATE}))
 
 if [ ${BATTERY_MINUTES_REMAINING} -le ${HIBERNATE_THRESHOLD_MINUTES} ]; then
