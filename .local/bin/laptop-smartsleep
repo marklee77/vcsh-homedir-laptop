@@ -1,46 +1,52 @@
 #!/bin/bash
-HIBERNATE_THRESHOLD_MINUTES=20
-SLEEP_LENGTH=+2hour
+# FIXME: change threshold_minutes to threshold_percentage
+hibernate_threshold_minutes=20
+sleep_length=+2hour
+battery=BAT0
 
-SCRIPTNAME="$(basename $0)"
-LOCKDIR="${HOME}/.local/var/lock/${SCRIPTNAME}"
-PIDFILE="${LOCKDIR}/PID"
-if mkdir ${LOCKDIR} &> /dev/null; then
-    trap "rm -rf ${LOCKDIR}; exit 0" EXIT SIGHUP SIGINT SIGQUIT SIGTERM
-    echo "$$" > ${PIDFILE}
+scriptname="$(basename $0)"
+
+lockdir="${HOME}/.local/var/lock/${scriptname}"
+pidfile="${lockdir}/PID"
+if mkdir ${lockdir} &> /dev/null; then
+    trap "rm -rf ${lockdir}; exit 0" EXIT SIGHUP SIGINT SIGQUIT SIGTERM
+    echo "$$" > ${pidfile}
 else
-    OTHERPID=$(cat ${PIDFILE})
-    OTHERNAME=$(basename $(ps aux | perl -ane "print \"\$F[11]\\n\" if (\$F[1] == ${OTHERPID});" 2>/dev/null) 2>/dev/null)
-    if [ -n "${OTHERPID}" ] && [ "${OTHERNAME}" != "${SCRIPTNAME}" ]; then
-        # lock is stale, remove and try again...
-        rm -rf ${LOCKDIR}
-        exec "$0" "$@"
+    otherpid=$(cat ${pidfile})
+    othercmd=$(ps --no-headers --format command --pid ${otherpid})
+    if [[ "${othercmd}" =~ .*${scriptname}.* ]]; then
+        echo "another instance of ${scriptname} is currently running." >&2
+        exit 1
     fi
-    echo "another instance of ${SCRIPTNAME} is currently running." >&2
-    exit 1
+    # lock is stale, remove and try again...
+    rm -rf ${LOCKDIR}
+    exec "$0" "$@"
 fi
 
-battery=BAT0
-BATTERY_REMAINING_CAPACITY=$(cat /sys/class/power_supply/${battery}/charge_now)
-BATTERY_PRESENT_RATE=$(cat /sys/class/power_supply/${battery}/current_now)
-BATTERY_MINUTES_REMAINING=$((${BATTERY_REMAINING_CAPACITY}*60/${BATTERY_PRESENT_RATE}))
+logfile="${HOME}/.local/var/log/${scriptname}.log"
+exec 1>${logfile}
+exec 2>&1
 
-if [ ${BATTERY_MINUTES_REMAINING} -le ${HIBERNATE_THRESHOLD_MINUTES} ]; then
+battery_remaining_capacity=$(cat /sys/class/power_supply/${battery}/charge_now)
+battery_present_rate=$(cat /sys/class/power_supply/${battery}/current_now)
+battery_minutes_remaining=$((${battery_remaining_capacity}*60/${battery_present_rate}))
+
+if [ ${battery_minutes_remaining} -le ${hibernate_threshold_minutes} ]; then
     laptop-hibernate
     exit 0
 fi
 
-WAKEALARM=/sys/class/rtc/rtc0/wakealarm
+wakealarm=/sys/class/rtc/rtc0/wakealarm
 
-rtcwake -m no -t $(date +%s -d${SLEEP_LENGTH}) 2>&1 > /dev/null
+rtcwake -m no -t $(date +%s -d${sleep_length})
 laptop-suspend
 
-ALARM=$(cat ${WAKEALARM})
-NOW=$(date +%s)
+alarm=$(cat ${wakealarm})
+now=$(date +%s)
 
-if [ -z ${ALARM} ] || [ ${NOW} -ge ${ALARM} ]; then
+if [ -z ${alarm} ] || [ ${now} -ge ${alarm} ]; then
     xset dpms force off
     sleep 5
     laptop-hibernate
 fi
-rtcwake -m no -t $(date +%s -d+5seconds) 2>&1 > /dev/null
+rtcwake -m no -t $(date +%s -d+5seconds)

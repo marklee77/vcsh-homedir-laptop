@@ -22,4 +22,4 @@ logfile="${HOME}/.local/var/log/${scriptname}.log"
 exec 1>${logfile}
 exec 2>&1
 
-i3lock -c 002b36 -d -I 5 -e -n 
+i3lock -c 002b36 -d -I 5 -e -n
