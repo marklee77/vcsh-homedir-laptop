@@ -1,38 +1,43 @@
 #!/bin/bash
-SCREEN_LAYOUTS=(left-of right-of mirror)
+screen_layouts=(left-of right-of mirror)
 
-SCRIPTNAME="$(basename $0)"
-LOCKDIR="${HOME}/.local/var/lock/${SCRIPTNAME}"
-PIDFILE="${LOCKDIR}/PID"
-if mkdir ${LOCKDIR} &> /dev/null; then
-    trap "rm -rf ${LOCKDIR}; exit 0" EXIT SIGHUP SIGINT SIGQUIT SIGTERM
-    echo "$$" > ${PIDFILE}
+scriptname="$(basename $0)"
+
+lockdir="${HOME}/.local/var/lock/${scriptname}"
+pidfile="${lockdir}/PID"
+if mkdir ${lockdir} &> /dev/null; then
+    trap "rm -rf ${lockdir}; exit 0" EXIT SIGHUP SIGINT SIGQUIT SIGTERM
+    echo "$$" > ${pidfile}
 else
-    OTHERPID=$(cat ${PIDFILE})
-    OTHERNAME=$(basename $(ps aux | perl -ane "print \"\$F[11]\\n\" if (\$F[1] == ${OTHERPID});" 2>/dev/null) 2>/dev/null)
-    if [ -n "${OTHERPID}" ] && [ "${OTHERNAME}" != "${SCRIPTNAME}" ]; then
-        # lock is stale, remove and try again...
-        rm -rf ${LOCKDIR}
-        exec "$0" "$@"
+    otherpid=$(cat ${pidfile})
+    othercmd=$(ps --no-headers --format command --pid ${otherpid})
+    if [[ "${othercmd}" =~ .*${scriptname}.* ]]; then
+        echo "another instance of ${scriptname} is currently running." >&2
+        exit 1
     fi
-    echo "another instance of ${SCRIPTNAME} is currently running." >&2
-    exit 1
+    # lock is stale, remove and try again...
+    rm -rf ${lockdir}
+    exec "$0" "$@"
 fi
 
-RUNDIR="${HOME}/.local/var/run/${SCRIPTNAME}"
-mkdir -p ${RUNDIR}
-CURRENT_LAYOUT=$(cat ${RUNDIR}/layout 2>/dev/null)
-[ -z "${CURRENT_LAYOUT}" ] && CURRENT_LAYOUT=${SCREEN_LAYOUTS[0]}
+#logfile="${HOME}/.local/var/log/${scriptname}.log"
+#exec 1>${logfile}
+#exec 2>&1
+
+rundir="${HOME}/.local/var/run/${scriptname}"
+mkdir -p ${rundir}
+current_layout=$(cat ${rundir}/layout 2>/dev/null)
+[ -z "${current_layout}" ] && current_layout=${screen_layouts[0]}
 
 if [ "$1" = "--nocycle" ]; then
-    NEW_LAYOUT="${CURRENT_LAYOUT}"
+    new_layout="${current_layout}"
 else
     i=0
-    for LAYOUT in ${SCREEN_LAYOUTS[@]}; do
-        i=$((($i + 1) % ${#SCREEN_LAYOUTS[@]}))
-        [ "${LAYOUT}" = "${CURRENT_LAYOUT}" ] && break
+    for layout in ${screen_layouts[@]}; do
+        i=$((($i + 1) % ${#screen_layouts[@]}))
+        [ "${layout}" = "${current_layout}" ] && break
     done
-    NEW_LAYOUT=${SCREEN_LAYOUTS[$i]}
+    new_layout=${screen_layouts[$i]}
 fi
-laptop-screen-set-layout ${NEW_LAYOUT}
-echo $NEW_LAYOUT > ${RUNDIR}/layout
+laptop-screen-set-layout ${new_layout}
+echo $new_layout > ${rundir}/layout

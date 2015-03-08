@@ -20,9 +20,8 @@ if [ -n "$layout" ]; then
     esac
 fi
 
-# make sure that only one instance of the process is trying to configure the
-# screen at a time.
 scriptname="$(basename $0)"
+
 lockdir="${HOME}/.local/var/lock/${scriptname}"
 pidfile="${lockdir}/PID"
 if mkdir ${lockdir} &> /dev/null; then
@@ -30,18 +29,19 @@ if mkdir ${lockdir} &> /dev/null; then
     echo "$$" > ${pidfile}
 else
     otherpid=$(cat ${pidfile})
-    othername=$(basename $(ps aux | \
-                           perl -lane "print \"\$F[11]\" \
-                                       if \$F[1] == ${otherpid}" 2>/dev/null) \
-                           2>/dev/null)
-    if [ -n "${otherpid}" ] && [ "${othername}" != "${scriptname}" ]; then
-        # lock is stale, remove and try again...
-        rm -rf ${lockdir}
-        exec "$0" "$@"
+    othercmd=$(ps --no-headers --format command --pid ${otherpid})
+    if [[ "${othercmd}" =~ .*${scriptname}.* ]]; then
+        echo "another instance of ${scriptname} is currently running." >&2
+        exit 1
     fi
-    echo "another instance of ${scriptname} is currently running." >&2
-    exit 1
+    # lock is stale, remove and try again...
+    rm -rf ${lockdir}
+    exec "$0" "$@"
 fi
+
+logfile="${HOME}/.local/var/log/${scriptname}.log"
+exec 1>${logfile}
+exec 2>&1
 
 output_status_list=$(xrandr --current | perl -ane 'if (/(\S+)\s+((?:dis)?connected)\s*((?:primary)?)\s*([^\s(+]*)/) { print "\n$1,$2,$3,$4,"; } elsif (/^\s+(\d+x\d+)\s+[0-9.*]+(\+?)/) { print "$1$2;" };')
 
