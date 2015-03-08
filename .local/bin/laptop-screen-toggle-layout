@@ -20,9 +20,9 @@ else
     exec "$0" "$@"
 fi
 
-#logfile="${HOME}/.local/var/log/${scriptname}.log"
-#exec 1>${logfile}
-#exec 2>&1
+logfile="${HOME}/.local/var/log/${scriptname}.log"
+exec 1>${logfile}
+exec 2>&1
 
 rundir="${HOME}/.local/var/run/${scriptname}"
 mkdir -p ${rundir}
@@ -39,5 +39,5 @@ else
     done
     new_layout=${screen_layouts[$i]}
 fi
-laptop-screen-set-layout ${new_layout}
 echo $new_layout > ${rundir}/layout
+laptop-screen-set-layout ${new_layout}
