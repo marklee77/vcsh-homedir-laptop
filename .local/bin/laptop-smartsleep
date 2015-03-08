@@ -1,6 +1,5 @@
 #!/bin/bash
-# FIXME: change threshold_minutes to threshold_percentage
-hibernate_threshold_minutes=20
+battery_charge_hibernate_percent=5
 sleep_length=+2hour
 battery=BAT0
 
@@ -27,11 +26,11 @@ logfile="${HOME}/.local/var/log/${scriptname}.log"
 exec 1>${logfile}
 exec 2>&1
 
-battery_remaining_capacity=$(cat /sys/class/power_supply/${battery}/charge_now)
-battery_present_rate=$(cat /sys/class/power_supply/${battery}/current_now)
-battery_minutes_remaining=$((${battery_remaining_capacity}*60/${battery_present_rate}))
+battery_charge_now=$(cat /sys/class/power_supply/${battery}/charge_now)
+battery_charge_full=$(cat /sys/class/power_supply/${battery}/charge_full)
+battery_charge_percent=$((100*$battery_charge_now/$battery_charge_full))
 
-if [ ${battery_minutes_remaining} -le ${hibernate_threshold_minutes} ]; then
+if [ ${battery_charge_percent} -le ${battery_charge_hibernate_percent} ]; then
     laptop-hibernate
     exit 0
 fi
@@ -50,3 +49,4 @@ if [ -z ${alarm} ] || [ ${now} -ge ${alarm} ]; then
     laptop-hibernate
 fi
 rtcwake -m no -t $(date +%s -d+5seconds)
+
