@@ -1,0 +1,35 @@
+#!/bin/bash 
+scriptname="$(basename $0)"
+
+lockdir="${HOME}/.local/var/lock/${scriptname}"
+pidfile="${lockdir}/PID"
+if mkdir ${lockdir} &> /dev/null; then
+    trap "rm -rf ${lockdir}; exit 0" EXIT SIGHUP SIGINT SIGQUIT SIGTERM
+    echo "$$" > ${pidfile}
+else
+    otherpid=$(cat ${pidfile})
+    othercmd=$(ps --no-headers --format command --pid ${otherpid})
+    if [[ "${othercmd}" =~ .*${scriptname}.* ]]; then
+        echo "another instance of ${scriptname} is currently running." >&2
+        exit 1
+    fi
+    # lock is stale, remove and try again...
+    rm -rf ${lockdir}
+    exec "$0" "$@"
+fi
+
+logfile="${HOME}/.local/var/log/${scriptname}.log"
+exec 1>${logfile}
+exec 2>&1
+
+acpi_listen | while read event params; do
+    case $event in
+        button/lid)
+        laptop-acpi-process-event-button_lid
+        ;;
+        #battery)
+        #echo "battery event"
+        #acpi -b
+        #;;
+    esac
+done
