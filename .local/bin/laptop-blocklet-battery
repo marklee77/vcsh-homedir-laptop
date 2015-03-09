@@ -1,0 +1,74 @@
+#!/bin/bash
+thresholds=(15 40 95 100)
+prefixes=("\uf112" "\uf115" "\uf114" "\uf113")
+colors=("#dc322f" "#b58900" "#839496" "#859900")
+charging_prefix="\uf111"
+
+battery=${1:-BAT0}
+warn_percent=7
+hibernate_percent=5
+
+scriptname="$(basename $0)"
+
+logfile="${HOME}/.local/var/log/${scriptname}.log"
+exec 3>&1
+exec 1>${logfile}
+exec 2>&1
+
+present_rate=$(cat /sys/class/power_supply/${battery}/current_now)
+remaining_capacity=$(cat /sys/class/power_supply/${battery}/charge_now)
+design_capacity=$(cat /sys/class/power_supply/${battery}/charge_full)
+
+percentage="$((100*$remaining_capacity/$design_capacity))"
+for i in $(seq 0 $((${#thresholds[@]}-1))); do
+    if [ $percentage -le ${thresholds[i]} ]; then
+        prefix=${prefixes[i]}
+        color=${colors[i]}
+        break
+    fi
+done
+
+status="ok"
+previous_status=$(cat $run_dir/status 2>/dev/null)
+[ -z $previous_status ] && previous_status="ok"
+if on_ac_power || [ $present_rate -le 0 ]; then
+    prefix=$charging_prefix
+else
+    minutes_remaining=$(($remaining_capacity*60/$present_rate))
+    hours_remaining=$(($minutes_remaining/60))
+    minutes_remaining_partial=$(($minutes_remaining%60))
+    if [ $minutes_remaining_partial -lt 10 ]; then
+        minutes_remaining_partial="0$minutes_remaining_partial"
+    fi
+    time_remaining="$hours_remaining:$minutes_remaining_partial"
+
+    if [ $percentage -le $warn_percent ]; then
+        status="low"
+        if [ "$previous_status" = "ok" ]; then
+            notify-send --urgency=critical \
+                "Low Battery Warning!" \
+                "The battery charge is critically low. Please connect to AC power."
+        elif [ "$previous_status" = "low" ] && 
+             [ $percentage -le $hibernate_percent ]; then
+            notify-send --urgency=critical \
+                "Hibernating!" \
+                "If the computer is not plugged in within the next 30 seconds, hibernation procedures will commence."
+            sleep 30
+            on_ac_power || laptop-hibernate
+        fi
+    fi
+fi
+
+echo $status > $run_dir/status
+
+short_text="$prefix $percentage%"
+full_text=$short_text
+[ -n $time_remaining ] && full_text="$full_text $time_remaining"
+
+echo -e $full_text
+echo -e $short_text
+[ -n "$color" ] && echo $color
+
+[ $status = "critical" ] && exit 33
+exit 0
+

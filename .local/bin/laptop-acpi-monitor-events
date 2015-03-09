@@ -25,10 +25,10 @@ exec 2>&1
 acpi_listen | while read event params; do
     case $event in
         button/lid)
-        laptop-acpi-process-event-button_lid
+        laptop-acpi-process-event-button_lid &
         ;;
         battery)
-        laptop-acpi-process-event-battery
+        laptop-acpi-process-event-battery &
         ;;
     esac
 done
