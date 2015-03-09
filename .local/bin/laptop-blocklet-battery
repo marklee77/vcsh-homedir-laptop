@@ -43,19 +43,7 @@ else
     time_remaining="$hours_remaining:$minutes_remaining_partial"
 
     if [ $percentage -le $warn_percent ]; then
-        status="low"
-        if [ "$previous_status" = "ok" ]; then
-            notify-send --urgency=critical \
-                "Low Battery Warning!" \
-                "The battery charge is critically low. Please connect to AC power."
-        elif [ "$previous_status" = "low" ] && 
-             [ $percentage -le $hibernate_percent ]; then
-            notify-send --urgency=critical \
-                "Hibernating!" \
-                "If the computer is not plugged in within the next 30 seconds, hibernation procedures will commence."
-            sleep 30
-            on_ac_power || laptop-hibernate
-        fi
+        status="critical"
     fi
 fi
 
@@ -65,10 +53,13 @@ short_text="$prefix $percentage%"
 full_text=$short_text
 [ -n $time_remaining ] && full_text="$full_text $time_remaining"
 
+exec >&3
+
 echo -e $full_text
 echo -e $short_text
 [ -n "$color" ] && echo $color
 
 [ $status = "critical" ] && exit 33
+
 exit 0
 
