@@ -15,6 +15,8 @@ exec 3>&1
 exec 1>${logfile}
 exec 2>&1
 
+battery_capacity=$(cat /sys/class/power_supply/${battery}/capacity)
+
 present_rate=$(cat /sys/class/power_supply/${battery}/current_now)
 remaining_capacity=$(cat /sys/class/power_supply/${battery}/charge_now)
 design_capacity=$(cat /sys/class/power_supply/${battery}/charge_full)
