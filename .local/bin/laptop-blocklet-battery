@@ -17,41 +17,31 @@ exec 2>&1
 
 battery_capacity=$(cat /sys/class/power_supply/${battery}/capacity)
 
-present_rate=$(cat /sys/class/power_supply/${battery}/current_now)
-remaining_capacity=$(cat /sys/class/power_supply/${battery}/charge_now)
-design_capacity=$(cat /sys/class/power_supply/${battery}/charge_full)
-
-percentage="$((100*$remaining_capacity/$design_capacity))"
 for i in $(seq 0 $((${#thresholds[@]}-1))); do
-    if [ $percentage -le ${thresholds[i]} ]; then
+    if [ $battery_capacity -le ${thresholds[i]} ]; then
         prefix=${prefixes[i]}
         color=${colors[i]}
         break
     fi
 done
 
-status="ok"
-previous_status=$(cat $run_dir/status 2>/dev/null)
-[ -z $previous_status ] && previous_status="ok"
-if on_ac_power || [ $present_rate -le 0 ]; then
+battery_status=$(cat /sys/class/power_supply/${battery}/status)
+
+if [ "$battery_status" = "Charging" ]; then
     prefix=$charging_prefix
 else
-    minutes_remaining=$(($remaining_capacity*60/$present_rate))
+    battery_current_now=$(cat /sys/class/power_supply/${battery}/current_now)
+    battery_charge_now=$(cat /sys/class/power_supply/${battery}/charge_now)
+    minutes_remaining=$(($battery_charge_now*60/$battery_current_now))
     hours_remaining=$(($minutes_remaining/60))
     minutes_remaining_partial=$(($minutes_remaining%60))
     if [ $minutes_remaining_partial -lt 10 ]; then
         minutes_remaining_partial="0$minutes_remaining_partial"
     fi
     time_remaining="$hours_remaining:$minutes_remaining_partial"
-
-    if [ $percentage -le $warn_percent ]; then
-        status="critical"
-    fi
 fi
 
-echo $status > $run_dir/status
-
-short_text="$prefix $percentage%"
+short_text="$prefix $battery_capacity%"
 full_text=$short_text
 [ -n $time_remaining ] && full_text="$full_text $time_remaining"
 
@@ -61,7 +51,4 @@ echo -e $full_text
 echo -e $short_text
 [ -n "$color" ] && echo $color
 
-[ $status = "critical" ] && exit 33
-
 exit 0
-
