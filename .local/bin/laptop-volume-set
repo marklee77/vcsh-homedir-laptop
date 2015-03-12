@@ -4,3 +4,4 @@ VALUE=$*
 amixer -q -c 1 set Headphone 100% on
 amixer -q -c 1 set PCM 100% on
 amixer -q -c 1 set Master $VALUE
+pkill -RTMIN+1 i3blocks
