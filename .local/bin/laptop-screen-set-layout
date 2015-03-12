@@ -131,6 +131,9 @@ if [ -n "$xrandr_options" ]; then
     if  [ "$xrandr_command" != "$previous_xrandr_command" ]; then
         echo "$xrandr_command" > ${rundir}/xrandr_command
         $xrandr_command 
+        if which laptop-keyboard-set-layout 2>/dev/null; then
+            laptop-keyboard-set-layout
+        fi
     fi
 elif [ -f "${rundir}/xrandr_command" ]; then
     rm -f ${rundir}/xrandr_command
