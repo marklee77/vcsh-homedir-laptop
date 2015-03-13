@@ -1,2 +1,2 @@
 #!/bin/bash
-#setxkbmap gb -option inet:evdev -option caps:escape -option compose:menu
+setxkbmap gb -option inet:evdev -option caps:escape -option compose:menu
