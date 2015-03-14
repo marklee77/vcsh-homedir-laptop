@@ -40,4 +40,5 @@ else
     new_layout=${screen_layouts[$i]}
 fi
 echo $new_layout > ${rundir}/layout
+pkill -RTMIN+3 i3blocks
 laptop-screen-set-layout ${new_layout}
