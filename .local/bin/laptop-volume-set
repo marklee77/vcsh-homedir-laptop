@@ -1,7 +1,38 @@
 #!/bin/sh
-VALUE=$*
-: ${VALUE:="toggle"}
+
+scriptname="$(basename $0)"
+
+lockdir="${HOME}/.local/var/lock/${scriptname}"
+pidfile="${lockdir}/PID"
+if mkdir ${lockdir} &> /dev/null; then
+    trap "rm -rf ${lockdir}; exit 0" EXIT SIGHUP SIGINT SIGQUIT SIGTERM
+    echo "$$" > ${pidfile}
+else
+    otherpid=$(cat ${pidfile} 2>/dev/null)
+    othercmd=$(ps --no-headers --format command --pid ${otherpid})
+    if [[ "${othercmd}" =~ .*${scriptname}.* ]]; then
+        sleep 1
+        exec "$0" "$@"
+    fi
+    # lock is stale, remove and try again...
+    rm -rf ${lockdir}
+    exec "$0" "$@"
+fi
+
+logfile="${HOME}/.local/var/log/${scriptname}.log"
+exec 1>${logfile}
+exec 2>&1
+
+rundir="${HOME}/.local/var/run/${scriptname}"
+mkdir -p ${rundir}
+current_volume_setting=$(cat ${rundir}/setting 2>/dev/null)
+if [ -z "$current_volume_setting" ]; then
+    current_volume_setting=($(amixer -c 1 get Master | perl -ne 'print "$1 $2\n" if /^\s*Mono:.*\[(.+)%\].*\[.*\].*\[(.+)\].*/'))
+fi
+
+value=$*
+: ${value:="toggle"}
 amixer -q -c 1 set Headphone 100% on
 amixer -q -c 1 set PCM 100% on
-amixer -q -c 1 set Master $VALUE
+amixer -q -c 1 set Master $value
 pkill -RTMIN+1 i3blocks
