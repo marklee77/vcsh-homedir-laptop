@@ -135,6 +135,9 @@ if [ -n "$xrandr_options" ]; then
         if which laptop-keyboard-set-layout 2>/dev/null; then
             laptop-keyboard-set-layout
         fi
+        if which laptop-volume-set 2>/dev/null; then
+            laptop-volume-set
+        fi
     fi
 elif [ -f "${rundir}/xrandr_command" ]; then
     rm -f ${rundir}/xrandr_command

@@ -20,9 +20,9 @@ else
     exec "$0" "$@"
 fi
 
-logfile="${HOME}/.local/var/log/${scriptname}.log"
-exec 1>${logfile}
-exec 2>&1
+#logfile="${HOME}/.local/var/log/${scriptname}.log"
+#exec 1>${logfile}
+#exec 2>&1
 
 rundir="${HOME}/.local/var/run/${scriptname}"
 mkdir -p ${rundir}
@@ -34,8 +34,8 @@ fi
 
 amixer -q -c 1 set Headphone 100% on
 amixer -q -c 1 set PCM 100% on
-amixer -q -c 1 set Master $params
+[ -n "$params" ] && amixer -q -c 1 set Master $params
 
-amixer -c 1 get Master | perl -ne 'print "$1 $2\n" if /^\s*Mono:.*\[(.+)%\].*\[.*\].*\[(.+)\].*/') > ${rundir}/settings
+amixer -c 1 get Master | perl -ne 'print "$1 $2\n" if /^\s*Mono:.*\[(.+%)\].*\[.*\].*\[(.+)\].*/' > ${rundir}/settings
 
 pkill -RTMIN+1 i3blocks
