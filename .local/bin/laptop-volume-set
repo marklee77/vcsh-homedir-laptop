@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+params=$*
 
 scriptname="$(basename $0)"
 
@@ -11,8 +12,8 @@ else
     otherpid=$(cat ${pidfile} 2>/dev/null)
     othercmd=$(ps --no-headers --format command --pid ${otherpid})
     if [[ "${othercmd}" =~ .*${scriptname}.* ]]; then
-        sleep 1
-        exec "$0" "$@"
+        echo "another instance of ${scriptname} is currently running." >&2
+        exit 1
     fi
     # lock is stale, remove and try again...
     rm -rf ${lockdir}
@@ -25,14 +26,16 @@ exec 2>&1
 
 rundir="${HOME}/.local/var/run/${scriptname}"
 mkdir -p ${rundir}
-current_volume_setting=$(cat ${rundir}/setting 2>/dev/null)
-if [ -z "$current_volume_setting" ]; then
-    current_volume_setting=($(amixer -c 1 get Master | perl -ne 'print "$1 $2\n" if /^\s*Mono:.*\[(.+)%\].*\[.*\].*\[(.+)\].*/'))
+
+current_volume_settings=$(cat ${rundir}/settings 2>/dev/null)
+if [ -n "$current_volume_settings" ]; then
+    amixer -q -c 1 set Master $current_volume_settings
 fi
 
-value=$*
-: ${value:="toggle"}
 amixer -q -c 1 set Headphone 100% on
 amixer -q -c 1 set PCM 100% on
-amixer -q -c 1 set Master $value
+amixer -q -c 1 set Master $params
+
+amixer -c 1 get Master | perl -ne 'print "$1 $2\n" if /^\s*Mono:.*\[(.+)%\].*\[.*\].*\[(.+)\].*/') > ${rundir}/settings
+
 pkill -RTMIN+1 i3blocks
