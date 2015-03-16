@@ -9,9 +9,7 @@ while true; do
         new_coordinates=$(curl -s freegeoip.net/csv/ | perl -F, -lane 'print "$F[-3] $F[-2]"' | head -1)
         [ -n "$new_coordinates" ] && curr_coordinates=$new_coordinates
     fi
-    echo $prev_coordinates $curr_coordinates
     if [ "$curr_coordinates" != "$prev_coordinates" ]; then
-        echo "restarting xflux..."
         read lat long <<< "$curr_coordinates"
         pkill ^xflux
         xflux -l $lat -g $long 2>&1 >/dev/null
