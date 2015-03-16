@@ -1,0 +1,23 @@
+#!/bin/bash
+default_coordinates="52 0"
+
+prev_coordinates=""
+curr_coordinates=$default_coordinates
+
+while true; do
+    if nm-online && ping -c 1 8.8.8.8 2>&1 >/dev/null; then
+        new_coordinates=$(curl -s freegeoip.net/csv/ | perl -F, -lane 'print "$F[-3] $F[-2]"' | head -1)
+        [ -n "$new_coordinates" ] && curr_coordinates=$new_coordinates
+    fi
+    echo $prev_coordinates $curr_coordinates
+    if [ "$curr_coordinates" != "$prev_coordinates" ]; then
+        echo "restarting xflux..."
+        read lat long <<< "$curr_coordinates"
+        pkill ^xflux
+        xflux -l $lat -g $long 2>&1 >/dev/null
+        prev_coordinates="$curr_coordinates"
+    fi
+    sleep 3600
+done
+
+exit 0
