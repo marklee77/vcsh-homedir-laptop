@@ -1,4 +1,5 @@
 #!/bin/bash
+# FIXME: lock code?
 battery=${1:-BAT0}
 warn_capacity=8
 sleep_capacity=5
