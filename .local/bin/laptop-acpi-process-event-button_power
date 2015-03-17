@@ -1,0 +1,26 @@
+#!/bin/bash
+
+scriptname="$(basename $0)"
+
+logfile="${HOME}/.local/var/log/${scriptname}.log"
+exec 1>>${logfile}
+exec 2>&1
+
+# laptop_screen_name defaults to first connected output, but could be set
+# explicitly
+laptop_screen_name=$(xrandr --current | \
+                     perl -lane 'print $F[0] if $F[1] eq "connected"' | \
+                     head -1)
+
+lid_state=$(perl -ane 'print $F[1]' /proc/acpi/button/lid/LID/state)
+
+if [ "$lid_state" = "closed" ] && ! xrandr --current | grep " connected" | grep -v ^$laptop_screen_name -q; then
+    if on_ac_power; then
+        laptop-lock
+    else
+        laptop-smartsleep 
+    fi
+fi
+laptop-screen-toggle-layout --nocycle
+
+exit 0
