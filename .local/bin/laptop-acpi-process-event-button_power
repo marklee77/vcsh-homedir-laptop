@@ -1,22 +1,26 @@
 #!/bin/bash
-# FIXME: could have some more sophisticated code to check aging out or other
-# processes, similar to how we do locks for normal tasks...
-
 scriptname="$(basename $0)"
+
+lockdir="${HOME}/.local/var/lock/${scriptname}"
+pidfile="${lockdir}/PID"
+if mkdir ${lockdir} &> /dev/null; then
+    trap "rm -rf ${lockdir}; exit 0" EXIT SIGHUP SIGINT SIGQUIT SIGTERM
+    echo "$$" > ${pidfile}
+else
+    otherpid=$(cat ${pidfile} 2>/dev/null)
+    othercmd=$(ps --no-headers --format command --pid ${otherpid})
+    if [[ "${othercmd}" =~ .*${scriptname}.* ]]; then
+        laptop-smartsleep
+    fi
+    # lock is stale, remove and try again...
+    rm -rf ${lockdir}
+    exec "$0" "$@"
+fi
 
 logfile="${HOME}/.local/var/log/${scriptname}.log"
 exec 1>>${logfile}
 exec 2>&1
 
-rundir="${HOME}/.local/var/run/${scriptname}"
-mkdir -p ${rundir}
-if [ -f ${rundir}/confirm ]; then
-    rm ${rundir}/confirm
-    laptop-hibernate
-else
-    touch ${rundir}/confirm
-    sleep 10
-    rm ${rundir}/confirm
-fi
+sleep 10
 
 exit 0
