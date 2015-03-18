@@ -27,6 +27,9 @@ acpi_listen | while read event params; do
         button/lid)
         laptop-acpi-process-event-button_lid &
         ;;
+        button/power)
+        laptop-acpi-process-event-button_power &
+        ;;
         battery)
         laptop-acpi-process-event-battery &
         ;;
