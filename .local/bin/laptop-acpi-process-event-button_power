@@ -1,4 +1,6 @@
 #!/bin/bash
+# FIXME: could have some more sophisticated code to check aging out or other
+# processes, similar to how we do locks for normal tasks...
 
 scriptname="$(basename $0)"
 
@@ -9,6 +11,7 @@ exec 2>&1
 rundir="${HOME}/.local/var/run/${scriptname}"
 mkdir -p ${rundir}
 if [ -f ${rundir}/confirm ]; then
+    rm ${rundir}/confirm
     laptop-hibernate
 else
     touch ${rundir}/confirm
