@@ -10,7 +10,7 @@ else
     otherpid=$(cat ${pidfile} 2>/dev/null)
     othercmd=$(ps --no-headers --format command --pid ${otherpid})
     if [[ "${othercmd}" =~ .*${scriptname}.* ]]; then
-        laptop-smartsleep
+        exit 1
     fi
     # lock is stale, remove and try again...
     rm -rf ${lockdir}
@@ -21,6 +21,19 @@ logfile="${HOME}/.local/var/log/${scriptname}.log"
 exec 1>>${logfile}
 exec 2>&1
 
-sleep 10
+rundir="${HOME}/.local/var/run/${scriptname}"
+mkdir -p $rundir
+
+prev_button_time=$(cat $rundir/button_time 2>/dev/null)
+curr_button_time=$(date +%s)
+
+if [ -z "$prev_button_time" ] || \
+   [ $(($curr_button_time - $prev_button_time)) -le 1 ] || \
+   [ $(($curr_button_time - $prev_button_time)) -gt 10 ]; then
+    echo $curr_button_time > $rundir/button_time
+else
+    rm -rf $rundir
+    laptop-smartsleep
+fi
 
 exit 0
