@@ -5,10 +5,10 @@ prev_coordinates=""
 curr_coordinates=$default_coordinates
 
 while true; do
-    if nm-online && ping -c 1 8.8.8.8 2>&1 >/dev/null; then
-        new_coordinates=$(curl -s freegeoip.net/csv/ | perl -F, -lane 'print "$F[-3] $F[-2]"' | head -1)
-        [ -n "$new_coordinates" ] && curr_coordinates=$new_coordinates
-    fi
+    #if nm-online && ping -c 1 8.8.8.8 2>&1 >/dev/null; then
+    #    new_coordinates=$(curl -s freegeoip.net/csv/ | perl -F, -lane 'print "$F[-3] $F[-2]"' | head -1)
+    #    [ -n "$new_coordinates" ] && curr_coordinates=$new_coordinates
+    #fi
     if [ "$curr_coordinates" != "$prev_coordinates" ]; then
         read lat long <<< "$curr_coordinates"
         pkill ^xflux
