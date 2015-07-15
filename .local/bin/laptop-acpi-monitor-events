@@ -1,5 +1,6 @@
 #!/bin/bash 
 scriptname="$(basename $0)"
+scriptdir="$(dirname $0)"
 
 lockdir="${HOME}/.local/var/lock/${scriptname}"
 pidfile="${lockdir}/PID"
@@ -25,13 +26,13 @@ exec 2>&1
 acpi_listen | while read event params; do
     case $event in
         button/lid)
-        laptop-acpi-process-event-button_lid &
+        $scriptdir/laptop-acpi-process-event-button_lid &
         ;;
         button/power)
-        laptop-acpi-process-event-button_power &
+        $scriptdir/laptop-acpi-process-event-button_power &
         ;;
         battery)
-        laptop-acpi-process-event-battery &
+        $scriptdir/laptop-acpi-process-event-battery &
         ;;
     esac
 done
