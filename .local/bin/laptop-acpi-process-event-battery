@@ -5,6 +5,8 @@ warn_capacity=8
 sleep_capacity=5
 
 scriptname="$(basename $0)"
+scriptdir="$(dirname $0)"
+export PATH="${scriptdir}:$PATH"
 
 logfile="${HOME}/.local/var/log/${scriptname}.log"
 exec 1>>${logfile}
