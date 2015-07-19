@@ -1,4 +1,8 @@
 #!/bin/bash
+scriptname="$(basename $0)"
+scriptdir="$(dirname $0)"
+export PATH="${scriptdir}:$PATH"
+
 xrandr="/usr/bin/xrandr"
 
 # laptop_screen_name defaults to first connected output, but could be set
@@ -19,8 +23,6 @@ if [ -n "$layout" ]; then
         ;;
     esac
 fi
-
-scriptname="$(basename $0)"
 
 lockdir="${HOME}/.local/var/lock/${scriptname}"
 pidfile="${lockdir}/PID"

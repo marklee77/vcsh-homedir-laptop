@@ -1,9 +1,11 @@
 #!/bin/bash
+scriptname="$(basename $0)"
+scriptdir="$(dirname $0)"
+export PATH="${scriptdir}:$PATH"
+
 battery_charge_hibernate_percent=5
 sleep_length=+2hour
 battery=BAT0
-
-scriptname="$(basename $0)"
 
 lockdir="${HOME}/.local/var/lock/${scriptname}"
 pidfile="${lockdir}/PID"

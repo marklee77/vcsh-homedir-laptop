@@ -1,5 +1,7 @@
 #!/bin/bash
 scriptname="$(basename $0)"
+scriptdir="$(dirname $0)"
+export PATH="${scriptdir}:$PATH"
 
 lockdir="${HOME}/.local/var/lock/${scriptname}"
 pidfile="${lockdir}/PID"

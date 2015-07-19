@@ -1,7 +1,9 @@
 #!/bin/bash
-screen_layouts=(left-of right-of mirror)
-
 scriptname="$(basename $0)"
+scriptdir="$(dirname $0)"
+export PATH="${scriptdir}:$PATH"
+
+screen_layouts=(left-of right-of mirror)
 
 lockdir="${HOME}/.local/var/lock/${scriptname}"
 pidfile="${lockdir}/PID"
