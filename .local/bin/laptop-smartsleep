@@ -28,6 +28,10 @@ logfile="${HOME}/.local/var/log/${scriptname}.log"
 exec 1>${logfile}
 exec 2>&1
 
+# FIXME: hibernate has been problematic lately...
+laptop-suspend
+exit 0
+
 battery_charge_now=$(cat /sys/class/power_supply/${battery}/charge_now)
 battery_charge_full=$(cat /sys/class/power_supply/${battery}/charge_full)
 battery_charge_percent=$((100*$battery_charge_now/$battery_charge_full))
@@ -51,4 +55,3 @@ if [ -z ${alarm} ] || [ ${now} -ge ${alarm} ]; then
     laptop-hibernate
 fi
 rtcwake -m no -t $(date +%s -d+5seconds)
-
