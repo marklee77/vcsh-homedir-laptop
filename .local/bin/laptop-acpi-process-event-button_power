@@ -33,9 +33,9 @@ curr_button_time=$(date +%s%N)
 if [ -z "$prev_button_time" ] || \
    [ $(($curr_button_time - $prev_button_time)) -le 250000000 ] || \
    [ $(($curr_button_time - $prev_button_time)) -gt 10000000000 ]; then
-    echo $curr_button_time > $rundir/button_time 2>/dev/null
+    echo $curr_button_time > $rundir/button_time
 else
-    rm -rf $rundir
+    rm -f $rundir/button_time
     laptop-smartsleep
 fi
 
