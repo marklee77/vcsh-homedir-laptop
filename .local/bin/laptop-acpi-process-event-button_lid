@@ -1,5 +1,4 @@
 #!/bin/bash
-
 scriptname="$(basename $0)"
 scriptdir="$(dirname $0)"
 export PATH="${scriptdir}:$PATH"
