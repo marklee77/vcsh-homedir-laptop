@@ -1,11 +1,12 @@
 #!/bin/bash
 scriptname="$(basename $0)"
-scriptdir="$(dirname $0)"
-export PATH="${scriptdir}:$PATH"
 
 logfile="${HOME}/.local/var/log/${scriptname}.log"
 exec 1>>${logfile}
 exec 2>&1
+
+scriptdir="$(dirname $0)"
+export PATH="${scriptdir}:$PATH"
 
 # laptop_screen_name defaults to first connected output, but could be set
 # explicitly

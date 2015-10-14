@@ -1,7 +1,5 @@
 #!/bin/bash
 scriptname="$(basename $0)"
-scriptdir="$(dirname $0)"
-export PATH="${scriptdir}:$PATH"
 
 lockdir="${XDG_RUNTIME_DIR:-${HOME}/.local/var}/${scriptname}.lock"
 pidfile="${lockdir}/PID"
@@ -29,6 +27,9 @@ exec 2>&1
 
 rundir="${XDG_RUNTIME_DIR:-${HOME}/.local/var/run}/${scriptname}"
 mkdir -p $rundir
+
+scriptdir="$(dirname $0)"
+export PATH="${scriptdir}:$PATH"
 
 prev_button_time=$(cat $rundir/button_time 2>/dev/null)
 curr_button_time=$(date +%s%N)
