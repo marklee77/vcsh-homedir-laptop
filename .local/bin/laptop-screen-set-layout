@@ -1,25 +1,4 @@
 #!/bin/bash
-xrandr="/usr/bin/xrandr"
-
-# laptop_screen_name defaults to first connected output, but could be set
-# explicitly
-laptop_screen_name=$(xrandr --current | \
-                     perl -lane 'print $F[0] if $F[1] eq "connected"' | \
-                     head -1)
-lid_state=$(perl -ane 'print $F[1]' /proc/acpi/button/lid/LID/state)
-layout="$1"
-
-if [ -n "$layout" ]; then
-    case $layout in 
-        mirror|left-of|right-of|above|below|off)
-        ;;
-        *)
-        echo -e "usage:\n$0 [mirror|left-of|right-of|above|below|off]"
-        exit 1
-        ;;
-    esac
-fi
-
 scriptname="$(basename $0)"
 
 lockdir="${XDG_RUNTIME_DIR:-${HOME}/.local/var}/${scriptname}.lock"
@@ -46,8 +25,33 @@ logfile="${logdir}/${scriptname}.log"
 exec 1>${logfile}
 exec 2>&1
 
+rundir="${XDG_RUNTIME_DIR:-${HOME}/.local/var/run}/${scriptname}"
+mkdir -p $rundir
+
 scriptdir="$(dirname $0)"
 export PATH="${scriptdir}:$PATH"
+
+xrandr="/usr/bin/xrandr"
+
+# laptop_screen_name defaults to first connected output, but could be set
+# explicitly
+laptop_screen_name=$(xrandr --current | \
+                     perl -lane 'print $F[0] if $F[1] eq "connected"' | \
+                     head -1)
+lid_state=$(perl -ane 'print $F[1]' /proc/acpi/button/lid/LID/state)
+layout="$1"
+
+if [ -n "$layout" ]; then
+    case $layout in 
+        mirror|left-of|right-of|above|below|off)
+        ;;
+        *)
+        echo -e "usage:\n$0 [mirror|left-of|right-of|above|below|off]"
+        exit 1
+        ;;
+    esac
+fi
+
 
 output_status_list=$(xrandr --current | perl -ane 'if (/(\S+)\s+((?:dis)?connected)\s*((?:primary)?)\s*([^\s(+]*)/) { print "\n$1,$2,$3,$4,"; } elsif (/^\s+(\d+x\d+)\s+[0-9.*]+(\+?)/) { print "$1$2;" };')
 
@@ -129,7 +133,6 @@ for output_status in $output_status_list; do
     fi
 done
 
-rundir="${HOME}/.local/var/run/${scriptname}"
 if [ -n "$xrandr_options" ]; then
     mkdir -p ${rundir}
     xrandr_command="$xrandr$xrandr_options"
