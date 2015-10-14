@@ -1,12 +1,15 @@
-#!/bin/bash
+#!/bin/bash -x
 scriptname="$(basename $0)"
 scriptdir="$(dirname $0)"
 export PATH="${scriptdir}:$PATH"
 
-lockdir="${HOME}/.local/var/lock/${scriptname}"
-pidfile="${lockdir}/PID"
-if mkdir ${lockdir} &> /dev/null; then
-    trap "rm -rf ${lockdir}; exit 0" EXIT SIGHUP SIGINT SIGQUIT SIGTERM
+lockdir="${XDG_RUNTIME_DIR:-${HOME}/.local/var}/lock"
+mkdir -p ${lockdir}
+
+scriptlockdir="${lockdir}/${scriptname}"
+pidfile="${scriptlockdir}/PID"
+if mkdir ${scriptlockdir} &> /dev/null; then
+    trap "rm -rf ${scriptlockdir}; exit 0" EXIT SIGHUP SIGINT SIGQUIT SIGTERM
     echo "$$" > ${pidfile}
 else
     otherpid=$(cat ${pidfile} 2>/dev/null)
@@ -16,7 +19,7 @@ else
         exit 1
     fi
     # lock is stale, remove and try again...
-    rm -rf ${lockdir}
+    rm -rf ${scriptlockdir}
     exec "$0" "$@"
 fi
 
@@ -24,7 +27,7 @@ logfile="${HOME}/.local/var/log/${scriptname}.log"
 exec 1>>${logfile}
 exec 2>&1
 
-rundir="${HOME}/.local/var/run/${scriptname}"
+rundir="${XDG_RUNTIME_DIR:-${HOME}/.local/var/run}/${scriptname}"
 mkdir -p $rundir
 
 prev_button_time=$(cat $rundir/button_time 2>/dev/null)
