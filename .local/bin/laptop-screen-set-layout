@@ -1,8 +1,4 @@
 #!/bin/bash
-scriptname="$(basename $0)"
-scriptdir="$(dirname $0)"
-export PATH="${scriptdir}:$PATH"
-
 xrandr="/usr/bin/xrandr"
 
 # laptop_screen_name defaults to first connected output, but could be set
@@ -24,7 +20,9 @@ if [ -n "$layout" ]; then
     esac
 fi
 
-lockdir="${HOME}/.local/var/lock/${scriptname}"
+scriptname="$(basename $0)"
+
+lockdir="${XDG_RUNTIME_DIR:-${HOME}/.local/var}/${scriptname}.lock"
 pidfile="${lockdir}/PID"
 if mkdir ${lockdir} &> /dev/null; then
     trap "rm -rf ${lockdir}; exit 0" EXIT SIGHUP SIGINT SIGQUIT SIGTERM
@@ -41,9 +39,15 @@ else
     exec "$0" "$@"
 fi
 
-logfile="${HOME}/.local/var/log/${scriptname}.log"
+logdir="${HOME}/.local/var/log"
+mkdir -p ${logdir}
+
+logfile="${logdir}/${scriptname}.log"
 exec 1>${logfile}
 exec 2>&1
+
+scriptdir="$(dirname $0)"
+export PATH="${scriptdir}:$PATH"
 
 output_status_list=$(xrandr --current | perl -ane 'if (/(\S+)\s+((?:dis)?connected)\s*((?:primary)?)\s*([^\s(+]*)/) { print "\n$1,$2,$3,$4,"; } elsif (/^\s+(\d+x\d+)\s+[0-9.*]+(\+?)/) { print "$1$2;" };')
 
