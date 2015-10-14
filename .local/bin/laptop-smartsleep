@@ -1,13 +1,7 @@
 #!/bin/bash
 scriptname="$(basename $0)"
-scriptdir="$(dirname $0)"
-export PATH="${scriptdir}:$PATH"
 
-battery_charge_hibernate_percent=5
-sleep_length=+2hour
-battery=BAT0
-
-lockdir="${HOME}/.local/var/lock/${scriptname}"
+lockdir="${XDG_RUNTIME_DIR:-${HOME}/.local/var}/${scriptname}.lock"
 pidfile="${lockdir}/PID"
 if mkdir ${lockdir} &> /dev/null; then
     trap "rm -rf ${lockdir}; exit 0" EXIT SIGHUP SIGINT SIGQUIT SIGTERM
@@ -24,13 +18,23 @@ else
     exec "$0" "$@"
 fi
 
-logfile="${HOME}/.local/var/log/${scriptname}.log"
+logdir="${HOME}/.local/var/log"
+mkdir -p ${logdir}
+
+logfile="${logdir}/${scriptname}.log"
 exec 1>${logfile}
 exec 2>&1
 
-# FIXME: hibernate has been problematic lately...
+scriptdir="$(dirname $0)"
+export PATH="${scriptdir}:$PATH"
+
+# hibernate has been problematic lately...
 laptop-suspend
 exit 0
+
+battery_charge_hibernate_percent=5
+sleep_length=+2hour
+battery=BAT0
 
 battery_charge_now=$(cat /sys/class/power_supply/${battery}/charge_now)
 battery_charge_full=$(cat /sys/class/power_supply/${battery}/charge_full)
