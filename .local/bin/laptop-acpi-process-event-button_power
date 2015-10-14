@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 scriptname="$(basename $0)"
 scriptdir="$(dirname $0)"
 export PATH="${scriptdir}:$PATH"
@@ -23,7 +23,10 @@ else
     exec "$0" "$@"
 fi
 
-logfile="${HOME}/.local/var/log/${scriptname}.log"
+logdir="${HOME}/.local/var/log"
+mkdir -p ${logdir}
+
+logfile="${logdir}/${scriptname}.log"
 exec 1>>${logfile}
 exec 2>&1
 
