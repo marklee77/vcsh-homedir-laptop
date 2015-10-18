@@ -20,7 +20,7 @@ if [ "$lid_state" = "closed" ] && ! xrandr --current | grep " connected" | grep 
     if on_ac_power; then
         laptop-lock
     else
-        laptop-smartsleep 
+        laptop-smartsleep
     fi
 fi
 laptop-screen-toggle-layout --nocycle

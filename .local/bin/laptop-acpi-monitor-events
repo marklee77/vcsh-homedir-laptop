@@ -39,7 +39,7 @@ acpi_listen | while read event params; do
         laptop-acpi-process-event-button_power &
         ;;
         battery|ac_adapter)
-        echo "checking battery..."
+        laptop-acpi-process-event-button_lid &
         laptop-check-battery &
         ;;
     esac
