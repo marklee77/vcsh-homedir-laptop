@@ -28,6 +28,7 @@ mkdir -p ${logdir}
 scriptdir="$(dirname $0)"
 export PATH="${scriptdir}:$PATH"
 
+# FIXME: rename events? also run button_lid on ac_adaptor events
 acpi_listen | while read event params; do
     echo "$(date): ($event)"
     case $event in
