@@ -5,3 +5,7 @@ autorestart=true
 [program:srandrd]
 command=srandrd -n laptop-acpi-process-event-button_lid
 autorestart=true
+
+[program:laptop-check-battery]
+command=runinterval 30 laptop-check-battery
+autorestart=true

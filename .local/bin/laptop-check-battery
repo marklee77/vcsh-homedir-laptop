@@ -31,6 +31,8 @@ mkdir -p ${rundir}
 scriptdir="$(dirname $0)"
 export PATH="${scriptdir}:$PATH"
 
+pkill -RTMIN+6 i3blocks
+
 battery=${1:-BAT0}
 warn_capacity=8
 sleep_capacity=5
