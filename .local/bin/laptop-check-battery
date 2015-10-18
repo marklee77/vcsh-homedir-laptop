@@ -22,8 +22,8 @@ logdir="${HOME}/.local/var/log"
 mkdir -p ${logdir}
 
 logfile="${logdir}/${scriptname}.log"
-#exec 1>>${logfile}
-#exec 2>&1
+exec 1>>${logfile}
+exec 2>&1
 
 rundir="${XDG_RUNTIME_DIR:-${HOME}/.local/var/run}/${scriptname}"
 mkdir -p ${rundir}
@@ -32,7 +32,7 @@ scriptdir="$(dirname $0)"
 export PATH="${scriptdir}:$PATH"
 
 battery=${1:-BAT0}
-warn_capacity=20
+warn_capacity=8
 sleep_capacity=5
 
 battery_capacity=$(cat /sys/class/power_supply/${battery}/capacity)
