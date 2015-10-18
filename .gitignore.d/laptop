@@ -3,6 +3,9 @@
 !.config/mr
 !.config/mr/config.d
 !.config/mr/config.d/laptop
+!.config/supervisord
+!.config/supervisord/config.d
+!.config/supervisord/config.d/laptop
 !.config/xsession
 !.config/xsession/rc.d
 !.config/xsession/rc.d/laptop

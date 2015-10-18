@@ -21,14 +21,15 @@ fi
 logdir="${HOME}/.local/var/log"
 mkdir -p ${logdir}
 
-logfile="${logdir}/${scriptname}.log"
-exec 1>${logfile}
-exec 2>&1
+#logfile="${logdir}/${scriptname}.log"
+#exec 1>${logfile}
+#exec 2>&1
 
 scriptdir="$(dirname $0)"
 export PATH="${scriptdir}:$PATH"
 
 acpi_listen | while read event params; do
+    echo "$(date): ($event)"
     case $event in
         button/lid)
         laptop-acpi-process-event-button_lid &
