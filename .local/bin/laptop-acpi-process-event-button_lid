@@ -10,7 +10,7 @@ export PATH="${scriptdir}:$PATH"
 
 # laptop_screen_name defaults to first connected output, but could be set
 # explicitly
-laptop_screen_name=$(xrandr | \
+laptop_screen_name=$(xrandr --current | \
                      perl -lane 'print $F[0] if $F[1] eq "connected"' | \
                      head -1)
 
