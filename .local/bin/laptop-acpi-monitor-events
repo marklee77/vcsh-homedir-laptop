@@ -41,6 +41,7 @@ acpi_listen | while read event params; do
         battery|ac_adapter)
         laptop-acpi-process-event-button_lid &
         laptop-check-battery &
+        xrandr
         ;;
     esac
 done
