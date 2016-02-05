@@ -8,7 +8,7 @@ command=srandrd -n laptop-acpi-process-event-button_lid
 autorestart=true
 
 [program:syndaemon]
-command=syndaemon -i 2
+command=syndaemon -i 1
 autorestart=true
 
 [program:laptop-check-battery]
