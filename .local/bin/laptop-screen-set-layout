@@ -128,7 +128,9 @@ if [ -n "$xrandr_options" ]; then
     if  [ "$xrandr_command" != "$previous_xrandr_command" ]; then
         echo "$xrandr_command" > ${rundir}/xrandr_command
         $xrandr_command 
-        # sometimes resetting the screen will undo keyboard mapping
+        if which laptop-set-background 2>&1 >/dev/null; then
+            laptop-set-background
+        fi
         if which laptop-keyboard-set-layout 2>&1 >/dev/null; then
             laptop-keyboard-set-layout
         fi
