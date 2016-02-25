@@ -1,2 +1,3 @@
 #!/bin/bash
 hsetroot -cover /lib/plymouth/themes/solar/star.png -tint '#839496'
+killall -SIGUSR1 conky
