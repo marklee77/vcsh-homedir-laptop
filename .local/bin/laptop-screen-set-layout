@@ -22,7 +22,7 @@ logdir="${HOME}/.local/var/log"
 mkdir -p ${logdir}
 
 logfile="${logdir}/${scriptname}.log"
-exec 1>${logfile}
+exec 1>>${logfile}
 exec 2>&1
 
 rundir="${XDG_RUNTIME_DIR:-${HOME}/.local/var/run}/${scriptname}"
@@ -137,14 +137,15 @@ if [ -n "$xrandr_options" ]; then
     mkdir -p ${rundir}
     xrandr_command="$xrandr$xrandr_options"
     previous_xrandr_command=$(cat ${rundir}/xrandr_command 2>/dev/null)
+    echo "$xrandr_command"
     if  [ "$xrandr_command" != "$previous_xrandr_command" ]; then
         echo "$xrandr_command" > ${rundir}/xrandr_command
         $xrandr_command 
         # sometimes resetting the screen will undo keyboard mapping
-        if which laptop-keyboard-set-layout 2>/dev/null; then
+        if which laptop-keyboard-set-layout 2>&1 >/dev/null; then
             laptop-keyboard-set-layout
         fi
-        if which laptop-volume-set 2>/dev/null; then
+        if which laptop-volume-set 2>&1 >/dev/null; then
             laptop-volume-set
         fi
     fi
