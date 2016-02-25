@@ -113,12 +113,8 @@ for output_status in $output_status_list; do
             output_options="--auto --mode $output_desired_mode $output_options"
         fi
         previous_connected_output=$output_name
-    elif [ -n "$output_mode" ]; then
-        if [ "$output_name" = "$laptop_screen_name" ]; then
+    elif [ -n "$output_mode" ] || [ "$output_name" = "$laptop_screen_name" ]; then
             output_options="--off"
-        else
-            output_options="--auto"
-        fi
     fi
     if [ -n "$output_options" ]; then 
         xrandr_options="$xrandr_options --output $output_name $output_options"
@@ -129,7 +125,6 @@ if [ -n "$xrandr_options" ]; then
     mkdir -p ${rundir}
     xrandr_command="$xrandr$xrandr_options"
     previous_xrandr_command=$(cat ${rundir}/xrandr_command 2>/dev/null)
-    echo "$xrandr_command"
     if  [ "$xrandr_command" != "$previous_xrandr_command" ]; then
         echo "$xrandr_command" > ${rundir}/xrandr_command
         $xrandr_command 
