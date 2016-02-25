@@ -88,6 +88,7 @@ for output_status in $output_status_list; do
     output_desired_mode=$(perl -lane 'if (/(\d+x\d+)\+/) { print $1; } else { print $F[0]; }' <<< ${output_available_modes//;/ })
     output_options=""
     if [ "$output_state" = "connected" ] && ([ "$output_name" != "$laptop_screen_name" ] || [ "$lid_state" = "open" ] || [ $num_active_outputs -eq 0 ] || [ "$layout" = "off" ]); then
+        echo "$output_name on"
         if [ -z "$previous_connected_output" ]; then
             output_options="--primary"
         fi
@@ -114,13 +115,15 @@ for output_status in $output_status_list; do
         fi
         previous_connected_output=$output_name
     elif [ -n "$output_mode" ]; then
+        echo "$output_name off"
         if [ "$output_name" = "$laptop_screen_name" ]; then
             output_options="--off"
         else
             output_options="--auto"
         fi
+    else
+        echo "$output_name unknown"
     fi
-    echo $output_name $output_mode $output_options
     if [ -n "$output_options" ]; then 
         xrandr_options="$xrandr_options --output $output_name $output_options"
     fi
