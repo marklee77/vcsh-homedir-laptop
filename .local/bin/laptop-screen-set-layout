@@ -52,7 +52,6 @@ if [ -n "$layout" ]; then
     esac
 fi
 
-
 output_status_list=$(xrandr --current | perl -ane 'if (/(\S+)\s+((?:dis)?connected)\s*((?:primary)?)\s*([^\s(+]*)/) { print "\n$1,$2,$3,$4,"; } elsif (/^\s+(\d+x\d+)\s+[0-9.*]+(\+?)/) { print "$1$2;" };')
 
 global_available_modes=""
@@ -111,14 +110,7 @@ for output_status in $output_status_list; do
             fi
         fi
         if [ "$layout" != "off" ] || [ -z "$previous_connected_output" ]; then
-            if [ "$output_mode" != "$output_desired_mode" ]; then
-                if [ -n "$output_desired_mode" ]; then
-                    output_options="--auto --mode $output_desired_mode $output_options"
-                fi
-                if [ -z "$output_mode" ]; then
-                    output_options="--auto $output_options"
-                fi
-            fi
+            output_options="--auto --mode $output_desired_mode $output_options"
         fi
         previous_connected_output=$output_name
     elif [ -n "$output_mode" ]; then
