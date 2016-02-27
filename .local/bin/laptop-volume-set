@@ -34,6 +34,7 @@ if [ -n "$current_volume_settings" ]; then
 fi
 
 amixer -q -c 1 set Headphone 100% on
+amixer -q -c 1 set Speaker 100% on
 amixer -q -c 1 set PCM 100% on
 
 [ -n "$*" ] && amixer -q -c 1 set Master $*
