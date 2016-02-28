@@ -1,7 +1,7 @@
 #!/bin/bash
 
-warn_capacity=8
-sleep_capacity=5
+warn_capacity=4
+sleep_capacity=2
 
 scriptname="$(basename $0)"
 
@@ -34,12 +34,7 @@ battery_energy_now=$(cat /sys/class/power_supply/BAT*/energy_now | paste -sd+ | 
 battery_energy_full=$(cat /sys/class/power_supply/BAT*/energy_full | paste -sd+ | bc)
 battery_capacity=$((100 * $battery_energy_now / $battery_energy_full))
 
-echo $battery_energy_now $battery_energy_full $battery_capacity
-
-exit 0
-battery_status=$(cat /sys/class/power_supply/${battery}/status)
-
-if [ "$battery_status" = "Discharging" ]; then
+if ! on_ac_power; then
     if [ $battery_capacity -le $sleep_capacity ]; then
         notify-send --urgency=critical \
             "Hibernating!" \
@@ -49,7 +44,7 @@ if [ "$battery_status" = "Discharging" ]; then
     elif [ $battery_capacity -le $warn_capacity ]; then
         prev_warn_time=$(cat $rundir/warn_time 2>/dev/null)
         curr_warn_time=$(date +%s)
-        if [ -z "$prev_warn_time" ] || [ $(($curr_warn_time - $prev_warn_time)) -gt 30 ]; then
+        if [ -z "$prev_warn_time" ] || [ $(($curr_warn_time - $prev_warn_time)) -ge 30 ]; then
             notify-send --urgency=critical \
                 "Low Battery Warning!" \
                 "The battery charge is critically low. Please connect to AC power."
