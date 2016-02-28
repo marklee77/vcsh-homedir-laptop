@@ -26,14 +26,11 @@ export PATH="${scriptdir}:$PATH"
 
 prev_button_time=$(cat $rundir/button_time 2>/dev/null)
 curr_button_time=$(date +%s%N)
+echo $curr_button_time > $rundir/button_time
 
-# between 0.25 and 10s between clicks...
-if [ -z "$prev_button_time" ] || \
-   [ $(($curr_button_time - $prev_button_time)) -le 250000000 ] || \
-   [ $(($curr_button_time - $prev_button_time)) -gt 10000000000 ]; then
-    echo $curr_button_time > $rundir/button_time
-else
-    rm -f $rundir/button_time
+# ignore clicks in 0.25s window
+if [ -z "$prev_button_time" ] || [ $(($curr_button_time - $prev_button_time)) -ge 250000000 ]; then
+    echo "engaging smartsleep..."
     laptop-smartsleep
 fi
 
