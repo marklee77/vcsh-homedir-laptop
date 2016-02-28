@@ -1,4 +1,4 @@
 #!/bin/bash
 #hsetroot -solid '#002b36'
-hsetroot -cover /lib/plymouth/themes/solar/star.png -tint '#839496'
+hsetroot -cover /lib/plymouth/themes/solar/star.png -tint '#586e75'
 killall -SIGUSR1 conky
