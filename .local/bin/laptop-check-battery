@@ -1,7 +1,12 @@
 #!/bin/bash
+
+warn_capacity=8
+sleep_capacity=5
+
 scriptname="$(basename $0)"
 
-exit 0
+scriptdir="$(dirname $0)"
+export PATH="${scriptdir}:$PATH"
 
 lockdir="${XDG_RUNTIME_DIR:-${HOME}/.local/var/lock}/${scriptname}.lock"
 pidfile="${lockdir}/PID"
@@ -20,28 +25,19 @@ else
     exec "$0" "$@"
 fi
 
-logdir="${HOME}/.local/var/log"
-mkdir -p ${logdir}
-
-logfile="${logdir}/${scriptname}.log"
-exec 1>>${logfile}
-exec 2>&1
-
 rundir="${XDG_RUNTIME_DIR:-${HOME}/.local/var/run}/${scriptname}"
 mkdir -p ${rundir}
 
-scriptdir="$(dirname $0)"
-export PATH="${scriptdir}:$PATH"
-
 pkill -RTMIN+6 i3blocks
 
-warn_capacity=8
-sleep_capacity=5
+battery_energy_now=$(cat /sys/class/power_supply/BAT*/energy_now | paste -sd+ | bc)
+battery_energy_full=$(cat /sys/class/power_supply/BAT*/energy_full | paste -sd+ | bc)
+battery_capacity=$((100 * $battery_energy_now / $battery_energy_full))
 
-battery_capacity=$(cat /sys/class/power_supply/${battery}/capacity)
-battery_status=$(cat /sys/class/power_supply/${battery}/status)
+echo $battery_energy_now $battery_energy_full $battery_capacity
 
 exit 0
+battery_status=$(cat /sys/class/power_supply/${battery}/status)
 
 if [ "$battery_status" = "Discharging" ]; then
     if [ $battery_capacity -le $sleep_capacity ]; then
