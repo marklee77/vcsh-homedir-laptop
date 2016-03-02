@@ -35,5 +35,8 @@ acpi_listen | while read event params; do
         laptop-acpi-process-event-button_lid &
         laptop-check-battery &
         ;;
+        jack/*)
+        laptop-volume-set off &
+        ;;
     esac
 done
