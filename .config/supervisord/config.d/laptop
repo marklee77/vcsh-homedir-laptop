@@ -10,6 +10,7 @@ autorestart=true
 [program:laptop-check-battery]
 command=runinterval 30 laptop-check-battery
 autorestart=true
+stopsignal=KILL
 
 # FIXME: port to wicd...
 #[program:laptop-network-kill-ssh]
