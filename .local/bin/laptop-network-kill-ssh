@@ -25,8 +25,7 @@ scriptdir="$(dirname $0)"
 export PATH="${scriptdir}:$PATH"
 
 prev_network=$(cat ${rundir}/network 2>/dev/null)
-curr_network=$(nmcli con status | tail -1 | \
-               perl -lne 'print $1 if /(.*?)(?:\s+\S+){5}\s*$/')
+curr_network=$(wicd-cli -zd && wicd-cli -yd | sed -nr '/^IP: (.*)$/{s//\1/p;q}')
 
 ssh_procs=$(pgrep -f "^ssh: .*ssh_control_")
 

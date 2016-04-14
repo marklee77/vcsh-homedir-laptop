@@ -12,7 +12,7 @@ command=runinterval 30 laptop-check-battery
 autorestart=true
 stopsignal=KILL
 
-#[program:laptop-network-kill-ssh]
-#command=runinterval 15 laptop-network-kill-ssh
-#autorestart=true
-#stopsignal=KILL
+[program:laptop-network-kill-ssh]
+command=runinterval 10 laptop-network-kill-ssh
+autorestart=true
+stopsignal=KILL
