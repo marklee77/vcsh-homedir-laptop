@@ -12,6 +12,3 @@ amixer -c 1 set Capture off
 
 # bluetooth off
 bluetooth off
-
-# refresh screen info
-xrandr >/dev/null
