@@ -25,7 +25,7 @@ scriptdir="$(dirname $0)"
 export PATH="${scriptdir}:$PATH"
 
 prev_network=$(cat ${rundir}/network 2>/dev/null)
-curr_network=$((ip a s eth0 && ip a s wlan0) | sed -nr '/^\s*inet ([^/]*).*/{s//\1/p;q}')
+curr_network=$((ip a s eth0 && ip a s wlan0 && ip a s usb0) | sed -nr '/^\s*inet ([^/]*).*/{s//\1/p;q}')
 
 ssh_procs=$(pgrep -f "^ssh: .*ssh_control_")
 
