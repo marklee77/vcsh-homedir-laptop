@@ -2,16 +2,10 @@
 scriptdir="$(dirname "${BASH_SOURCE[0]}")"
 export PATH="${scriptdir}:$PATH"
 
-# laptop_screen_name defaults to first connected output, but could be set
-# explicitly
-laptop_screen_name=$(xrandr --current | \
-                     perl -lane 'print $F[0] if $F[1] eq "connected"' | \
-                     head -1)
+lid_state="$(awk '{ print $2 }' /proc/acpi/button/lid/LID/state)"
+connected_screen_count="$(xrandr --current | grep -c " connected")"
 
-lid_state=$(perl -ane 'print $F[1]' /proc/acpi/button/lid/LID/state)
-
-#if [ "$lid_state" = "closed" ] && ! xrandr --current | grep " connected" | grep -v ^$laptop_screen_name -q; then
-if [ "$lid_state" = "closed" ] && xrandr --current | grep -q "^${laptop_screen_name} connected"; then
+if [ "${lid_state}" = "closed" ] && [ "${connected_screen_count}" -eq 1 ]; then
     if on_ac_power; then
         laptop-lock
     else
