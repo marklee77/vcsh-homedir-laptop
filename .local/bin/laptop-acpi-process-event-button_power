@@ -1,36 +1,25 @@
 #!/bin/bash
-scriptname="$(basename $0)"
-
-lockdir="${XDG_RUNTIME_DIR:-${HOME}/.local/var/lock}/${scriptname}.lock"
-pidfile="${lockdir}/PID"
-if mkdir ${lockdir} &> /dev/null; then
-    trap "rm -rf ${lockdir}; exit 0" EXIT SIGHUP SIGINT SIGQUIT SIGTERM
-    echo "$$" > ${pidfile}
-else
-    otherpid=$(cat ${pidfile} 2>/dev/null)
-    othercmd=$(ps --no-headers --format command --pid ${otherpid} 2>/dev/null)
-    if [[ "${othercmd}" =~ .*${scriptname}.* ]]; then
-        echo "another instance of ${scriptname} is currently running." >&2
-        exit 1
-    fi
-    # lock is stale, remove and try again...
-    rm -rf ${lockdir}
-    exec "$0" "$@"
-fi
-
+scriptname="$(basename "${BASH_SOURCE[0]}")"
 rundir="${XDG_RUNTIME_DIR:-${HOME}/.local/var/run}/${scriptname}"
-mkdir -p ${rundir}
+mkdir -p "${rundir}"
+pidfile="${rundir}/PID"
 
-scriptdir="$(dirname $0)"
+exec 200>"${pidfile}"
+if ! flock -n 200 || ! echo "$$" > "${pidfile}"; then
+    echo "another instance of the ${scriptname} is currently running..." >&2
+    exit 1
+fi
+trap 'flock -u 200 && rm -f "${pidfile}"' EXIT SIGHUP SIGINT SIGQUIT SIGTERM
+
+scriptdir="$(dirname "${BASH_SOURCE[0]}")"
 export PATH="${scriptdir}:$PATH"
 
-prev_button_time=$(cat $rundir/button_time 2>/dev/null)
-curr_button_time=$(date +%s%N)
-echo $curr_button_time > $rundir/button_time
+prev_button_time="$(cat "${rundir}/button_time" 2>/dev/null)"
+curr_button_time="$(date +%s%N)"
+echo "${curr_button_time}" > "${rundir}/button_time"
 
 # ignore clicks in 0.25s window
-if [ -z "$prev_button_time" ] || [ $(($curr_button_time - $prev_button_time)) -ge 250000000 ]; then
-    echo "engaging smartsleep..."
+if [ -z "${prev_button_time}" ] || [ $((curr_button_time - prev_button_time)) -ge 250000000 ]; then
     laptop-smartsleep
 fi
 
