@@ -3,52 +3,42 @@
 warn_capacity=4
 sleep_capacity=2
 
-scriptname="$(basename $0)"
-
-scriptdir="$(dirname $0)"
-export PATH="${scriptdir}:$PATH"
-
-lockdir="${XDG_RUNTIME_DIR:-${HOME}/.local/var/lock}/${scriptname}.lock"
-pidfile="${lockdir}/PID"
-if mkdir ${lockdir} &> /dev/null; then
-    trap "rm -rf ${lockdir}; exit 0" EXIT SIGHUP SIGINT SIGQUIT SIGTERM
-    echo "$$" > ${pidfile}
-else
-    otherpid=$(cat ${pidfile} 2>/dev/null)
-    othercmd=$(ps --no-headers --format command --pid ${otherpid} 2>/dev/null)
-    if [[ "${othercmd}" =~ .*${scriptname}.* ]]; then
-        echo "another instance of ${scriptname} is currently running." >&2
-        exit 1
-    fi
-    # lock is stale, remove and try again...
-    rm -rf ${lockdir}
-    exec "$0" "$@"
-fi
-
+scriptname="$(basename "${BASH_SOURCE[0]}")"
 rundir="${XDG_RUNTIME_DIR:-${HOME}/.local/var/run}/${scriptname}"
-mkdir -p ${rundir}
+mkdir -p "${rundir}"
+pidfile="${rundir}/PID"
+
+exec 200>"${pidfile}"
+if ! flock -n 200 || ! echo "$$" > "${pidfile}"; then
+    echo "another instance of the ${scriptname} is currently running..." >&2
+    exit 1
+fi
+trap 'flock -u 200 && rm -f "${pidfile}"' EXIT SIGHUP SIGINT SIGQUIT SIGTERM
+
+scriptdir="$(dirname "${BASH_SOURCE[0]}")"
+export PATH="${scriptdir}:$PATH"
 
 pkill -RTMIN+6 i3blocks
 
-battery_energy_now=$(cat /sys/class/power_supply/BAT*/energy_now | paste -sd+ | bc)
-battery_energy_full=$(cat /sys/class/power_supply/BAT*/energy_full | paste -sd+ | bc)
-battery_capacity=$((100 * $battery_energy_now / $battery_energy_full))
+battery_energy_now="$(cat /sys/class/power_supply/BAT*/energy_now | paste -sd+ | bc)"
+battery_energy_full="$(cat /sys/class/power_supply/BAT*/energy_full | paste -sd+ | bc)"
+battery_capacity="$((100 * battery_energy_now / battery_energy_full))"
 
 if ! on_ac_power; then
-    if [ $battery_capacity -le $sleep_capacity ]; then
+    if [ "${battery_capacity}" -le "${sleep_capacity}" ]; then
         notify-send --urgency=critical \
             "Hibernating!" \
-            "If the computer is not plugged in within the next 30 seconds, hibernation procedures will commence."
+            "If the computer is not plugged in within the next 30 seconds, hibernation will commence."
         sleep 30
         on_ac_power || laptop-smartsleep
-    elif [ $battery_capacity -le $warn_capacity ]; then
-        prev_warn_time=$(cat $rundir/warn_time 2>/dev/null)
-        curr_warn_time=$(date +%s)
-        if [ -z "$prev_warn_time" ] || [ $(($curr_warn_time - $prev_warn_time)) -ge 30 ]; then
+    elif [ "${battery_capacity}" -le "${warn_capacity}" ]; then
+        prev_warn_time="$(cat "${rundir}/warn_time" 2>/dev/null)"
+        curr_warn_time="$(date +%s)"
+        if [ -z "$prev_warn_time" ] || [ "$((curr_warn_time - prev_warn_time))" -ge 30 ]; then
             notify-send --urgency=critical \
                 "Low Battery Warning!" \
                 "The battery charge is critically low. Please connect to AC power."
-            echo $curr_warn_time > $rundir/warn_time
+            echo "${curr_warn_time}" > "${rundir}/warn_time"
         fi
     fi
 fi
