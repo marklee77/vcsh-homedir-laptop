@@ -14,10 +14,9 @@ trap 'flock -u 200 && rm -f "${pidfile}"' EXIT SIGHUP SIGINT SIGQUIT SIGTERM
 scriptdir="$(dirname "${BASH_SOURCE[0]}")"
 export PATH="${scriptdir}:$PATH"
 
-# FIXME: rename events? also run button_lid on ac_adaptor events
 acpi_listen | while read -r event params; do
-    echo "$(date): ($event)"
-    case $event in
+    echo "$(date): (${event}: ${params})"
+    case "${event}" in
         button/lid)
         laptop-acpi-process-event-button_lid &
         ;;
