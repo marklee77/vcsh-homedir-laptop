@@ -1,41 +1,33 @@
 #!/bin/bash
-scriptname="$(basename $0)"
-
-lockdir="${XDG_RUNTIME_DIR:-${HOME}/.local/var}/${scriptname}.lock"
-pidfile="${lockdir}/PID"
-if mkdir ${lockdir} &> /dev/null; then
-    trap "rm -rf ${lockdir}; exit 0" EXIT SIGHUP SIGINT SIGQUIT SIGTERM
-    echo "$$" > ${pidfile}
-else
-    otherpid=$(cat ${pidfile} 2>/dev/null)
-    othercmd=$(ps --no-headers --format command --pid ${otherpid} 2>/dev/null)
-    if [[ "${othercmd}" =~ .*${scriptname}.* ]]; then
-        echo "another instance of ${scriptname} is currently running." >&2
-        exit 1
-    fi
-    # lock is stale, remove and try again...
-    rm -rf ${lockdir}
-    exec "$0" "$@"
-fi
-
+scriptname="$(basename "${BASH_SOURCE[0]}")"
 rundir="${XDG_RUNTIME_DIR:-${HOME}/.local/var/run}/${scriptname}"
-mkdir -p ${rundir}
+mkdir -p "${rundir}"
+pidfile="${rundir}/PID"
 
-scriptdir="$(dirname $0)"
+exec 200>"${pidfile}"
+if ! flock -n 200 || ! echo "$$" > "${pidfile}"; then
+    echo "another instance of the ${scriptname} is currently running..." >&2
+    exit 1
+fi
+trap 'flock -u 200 && rm -f "${pidfile}"' EXIT SIGHUP SIGINT SIGQUIT SIGTERM
+
+scriptdir="$(dirname "${BASH_SOURCE[0]}")"
 export PATH="${scriptdir}:$PATH"
 
-prev_network=$(cat ${rundir}/network 2>/dev/null)
-curr_network=$((ip a s eth0 && ip a s wlan0 && ip a s usb0) | sed -nr '/^\s*inet ([^/]*).*/{s//\1/p;q}')
+prev_network="$(cat "${rundir}/network" 2>/dev/null)"
+curr_network="$((ip a s eth0 ; ip a s wlan0 ; ip a s usb0) | sed -nr '/^\s*inet ([^/]*).*/{s//\1/p;q}')"
 
-ssh_procs=$(pgrep -f "^ssh: .*ssh_control_")
+ssh_procs="$(pgrep -f "^ssh: .*ssh_control_")"
 
 if [ -z "$curr_network" ] || [ "$curr_network" != "$prev_network" ]; then
     for proc in $ssh_procs; do
-        grep -q "^$proc\$" ${rundir}/ssh_procs && kill $proc 2>/dev/null
+        if grep -q "^$proc\$" "${rundir}/ssh_procs"; then
+            kill "${proc}" 2>/dev/null
+        fi
     done
 fi
 
-echo "$curr_network" > ${rundir}/network
-echo "$ssh_procs" > ${rundir}/ssh_procs
+echo "$curr_network" > "${rundir}/network"
+echo "$ssh_procs" > "${rundir}/ssh_procs"
 
 exit 0
