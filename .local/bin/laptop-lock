@@ -1,15 +1,21 @@
-#!/bin/bash
+#!/bin/bash -x
 scriptname="$(basename "${BASH_SOURCE[0]}")"
 rundir="${XDG_RUNTIME_DIR:-${HOME}/.local/var/run}/${scriptname}"
 mkdir -p "${rundir}"
 pidfile="${rundir}/PID"
+
+cleanup() {
+    flock -u 200
+    rm -f "${pidfile}"
+    xset dpms 0 0 0
+}
 
 exec 200>"${pidfile}"
 if ! flock -n 200 || ! echo "$$" > "${pidfile}"; then
     echo "another instance of the ${scriptname} is currently running..." >&2
     exit 1
 fi
-trap 'flock -u 200 && rm -f "${pidfile}"' EXIT SIGHUP SIGINT SIGQUIT SIGTERM
+trap cleanup EXIT SIGHUP SIGINT SIGQUIT SIGTERM
 
-xset dpms force off
-i3lock -c 002b36 -I 5 -e -n
+xset dpms 5 5 5
+i3lock -c 002b36 -enf
