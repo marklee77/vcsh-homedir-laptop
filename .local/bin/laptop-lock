@@ -18,5 +18,4 @@ fi
 trap cleanup EXIT SIGHUP SIGINT SIGQUIT SIGTERM
 
 xset dpms 5 5 5
-killall -SIGUSR1 conky
 i3lock -c 002b36 -enf
