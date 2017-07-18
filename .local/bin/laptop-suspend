@@ -1,31 +1,19 @@
 #!/bin/bash
-scriptname="$(basename $0)"
-
-lockdir="${XDG_RUNTIME_DIR:-${HOME}/.local/var}/${scriptname}.lock"
-pidfile="${lockdir}/PID"
-if mkdir ${lockdir} &> /dev/null; then
-    trap "rm -rf ${lockdir}; exit 0" EXIT SIGHUP SIGINT SIGQUIT SIGTERM
-    echo "$$" > ${pidfile}
-else
-    otherpid=$(cat ${pidfile} 2>/dev/null)
-    othercmd=$(ps --no-headers --format command --pid ${otherpid} 2>/dev/null)
-    if [[ "${othercmd}" =~ .*${scriptname}.* ]]; then
-        echo "another instance of ${scriptname} is currently running." >&2
-        exit 1
-    fi
-    # lock is stale, remove and try again...
-    rm -rf ${lockdir}
-    exec "$0" "$@"
+scriptname="$(basename "${BASH_SOURCE[0]}")"
+rundir="${XDG_RUNTIME_DIR:-${HOME}/.local/var/run}/${scriptname}"
+pidfile="${rundir}/PID"
+cleanup () {
+    rm -f "${pidfile}"
+    flock -u 200
+}
+mkdir -p "${rundir}"
+exec 200>"${pidfile}"
+if ! flock -n 200 || ! echo "$$" > "${pidfile}"; then
+    echo "another instance of the ${scriptname} is currently running..." >&2
+    exit 1
 fi
-
-logdir="${HOME}/.local/var/log"
-mkdir -p ${logdir}
-
-logfile="${logdir}/${scriptname}.log"
-exec 1>${logfile}
-exec 2>&1
-
-scriptdir="$(dirname $0)"
+trap cleanup EXIT HUP INT QUIT TERM
+scriptdir="$(dirname "${BASH_SOURCE[0]}")"
 export PATH="${scriptdir}:$PATH"
 
 laptop-lock &

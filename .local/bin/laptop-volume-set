@@ -1,44 +1,32 @@
 #!/bin/bash
-scriptname="$(basename $0)"
-
-lockdir="${XDG_RUNTIME_DIR:-${HOME}/.local/var}/${scriptname}.lock"
-pidfile="${lockdir}/PID"
-if mkdir ${lockdir} &> /dev/null; then
-    trap "rm -rf ${lockdir}; exit 0" EXIT SIGHUP SIGINT SIGQUIT SIGTERM
-    echo "$$" > ${pidfile}
-else
-    otherpid=$(cat ${pidfile} 2>/dev/null)
-    othercmd=$(ps --no-headers --format command --pid ${otherpid} 2>/dev/null)
-    if [[ "${othercmd}" =~ .*${scriptname}.* ]]; then
-        echo "another instance of ${scriptname} is currently running." >&2
-        exit 1
-    fi
-    # lock is stale, remove and try again...
-    rm -rf ${lockdir}
-    exec "$0" "$@"
-fi
-
-logdir="${HOME}/.local/var/log"
-mkdir -p ${logdir}
-
-logfile="${logdir}/${scriptname}.log"
-#exec 1>${logfile}
-#exec 2>&1
-
+scriptname="$(basename "${BASH_SOURCE[0]}")"
 rundir="${XDG_RUNTIME_DIR:-${HOME}/.local/var/run}/${scriptname}"
-mkdir -p ${rundir}
+pidfile="${rundir}/PID"
+cleanup () {
+    rm -f "${pidfile}"
+    flock -u 200
+}
+mkdir -p "${rundir}"
+exec 200>"${pidfile}"
+if ! flock -n 200 || ! echo "$$" > "${pidfile}"; then
+    echo "another instance of the ${scriptname} is currently running..." >&2
+    exit 1
+fi
+trap cleanup EXIT HUP INT QUIT TERM
+scriptdir="$(dirname "${BASH_SOURCE[0]}")"
+export PATH="${scriptdir}:$PATH"
 
-current_volume_settings=$(cat ${rundir}/settings 2>/dev/null)
+current_volume_settings="$(cat "${rundir}/settings" 2>/dev/null)"
 if [ -n "$current_volume_settings" ]; then
-    amixer -q -c 1 set Master $current_volume_settings
+    amixer -q -c 1 set Master "$current_volume_settings"
 fi
 
 amixer -q -c 1 set Headphone 100% on
 amixer -q -c 1 set Speaker 100% on
 amixer -q -c 1 set PCM 100% on
 
-[ -n "$*" ] && amixer -q -c 1 set Master $*
+[ -n "$*" ] && amixer -q -c 1 set Master "$@"
 
-amixer -c 1 get Master | perl -ne 'print "$1 $2\n" if /^\s*Mono:.*\[(.+%)\].*\[.*\].*\[(.+)\].*/' > ${rundir}/settings
+amixer -c 1 get Master | perl -lne 'print "$1 $2" if /^\s*Mono:.*\[(.+%)\].*\[.*\].*\[(.+)\].*/' > "${rundir}/settings"
 
 pkill -RTMIN+1 i3blocks
