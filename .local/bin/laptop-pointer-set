@@ -14,17 +14,15 @@ if ! flock -n 200 || ! echo "$$" > "${pidfile}"; then
 fi
 trap cleanup EXIT HUP INT QUIT TERM
 
-inputs=($(xinput | grep -v XTEST | perl -ne 'print "$1\n" if /id=(\d+).*slave\s+pointer/' | sort -n))
-if [ "${#inputs[@]}" -lt 1 ]; then
-    exit 0
-fi
+inputs=($(xinput | grep -v XTEST | sed -nr 's/.*id=([0-9]+).*slave\s+pointer.*/\1/p' | sort -n))
+[ "${#inputs[@]}" -gt 0 ] || exit 0
 
-if [ "$1" == "on" ]; then
+if [ "$1" = "on" ]; then
     subcommand="enable"
-elif [ "$1" == "off" ]; then
+elif [ "$1" = "off" ]; then
     subcommand="disable"
 else
-    state=$(xinput list-props ${inputs[0]} | perl -ne 'print $1 if /Device Enabled .*:\s*(\d+)/')
+    state="$(xinput list-props "${inputs[0]}" | sed -nr 's/.*Device Enabled .*:\s*([0-9])/\1/p')"
     if [ "$state" = 1 ]; then
         subcommand="disable"
     else
