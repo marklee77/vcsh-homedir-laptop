@@ -23,15 +23,15 @@ elif [ "$1" = "off" ]; then
     subcommand="disable"
 else
     state="$(xinput list-props "${inputs[0]}" | sed -nr 's/.*Device Enabled .*:\s*([0-9])/\1/p')"
-    if [ "$state" = 1 ]; then
+    if [ "${state}" = 1 ]; then
         subcommand="disable"
     else
         subcommand="enable"
     fi
 fi
 
-if [ -n "$subcommand" ]; then
-    for input in ${inputs[@]}; do
-        xinput $subcommand $input
+if [ -n "${subcommand}" ]; then
+    for input in "${inputs[@]}"; do
+        xinput "${subcommand}" "${input}"
     done
 fi
