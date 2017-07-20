@@ -20,34 +20,33 @@ xrandr="/usr/bin/xrandr"
 
 # laptop_screen_name defaults to first connected output, but could be set
 # explicitly
-laptop_screen_name=$(xrandr --current | \
-                     perl -lane 'print $F[0] if $F[1] eq "connected"' | \
-                     head -1)
-lid_state=$(perl -ane 'print $F[1]' /proc/acpi/button/lid/LID/state)
+laptop_screen_name="$(xrandr --current | awk '$2 == "connected" { print $1; exit }')"
+lid_state="$(awk '{ print $2 }' /proc/acpi/button/lid/LID/state)"
 layout="$1"
 
-if [ -n "$layout" ]; then
-    case $layout in
+if [ -n "${layout}" ]; then
+    case "${layout}" in
         mirror|left-of|right-of|above|below|off)
         ;;
         *)
-        echo -e "usage:\n$0 [mirror|left-of|right-of|above|below|off]"
+        echo "usage:"
+        echo "${scriptname} [mirror|left-of|right-of|above|below|off]"
         exit 1
         ;;
     esac
 fi
 
-output_status_list=$(xrandr --current | perl -ane 'if (/(\S+)\s+((?:dis)?connected)\s*((?:primary)?)\s*([^\s(+]*)/) { print "\n$1,$2,$3,$4,"; } elsif (/^\s+(\d+x\d+)\s+[0-9.*]+(\+?)/) { print "$1$2;" };')
+output_status_list="$(xrandr --current | perl -ane 'if (/(\S+)\s+((?:dis)?connected)\s*((?:primary)?)\s*([^\s(+]*)/) { print "\n$1,$2,$3,$4,"; } elsif (/^\s+(\d+x\d+)\s+[0-9.*]+(\+?)/) { print "$1$2;" };')"
 
 global_available_modes=""
 num_active_outputs=0
 for output_status in $output_status_list; do
-    IFS="," read output_name output_state output_primary output_mode output_available_modes <<< "${output_status}"
+    IFS="," read -r output_name output_state output_primary output_mode output_available_modes <<< "${output_status}"
     if [ -n "${output_available_modes}" ] && \
        [ "$output_state" = "connected" ] && \
        ([ "$output_name" != "$laptop_screen_name" ] || \
         [ "$lid_state" = "open" ]); then
-        num_active_outputs=$(($num_active_outputs+1))
+        num_active_outputs="$((num_active_outputs+1))"
         if [ $num_active_outputs -eq 1 ]; then
             global_available_modes=${output_available_modes//[;+]/ }
         else
@@ -69,7 +68,7 @@ global_preferred_mode=$(perl -lane 'print $F[0]' <<< $global_available_modes)
 xrandr_options=""
 previous_connected_output=""
 for output_status in $output_status_list; do
-    IFS="," read output_name output_state output_primary output_mode output_available_modes <<< "${output_status}"
+    IFS="," read -r output_name output_state output_primary output_mode output_available_modes <<< "${output_status}"
     output_desired_mode=$(perl -lane 'if (/(\d+x\d+)\+/) { print $1; } else { print $F[0]; }' <<< ${output_available_modes//;/ })
     output_options=""
     if [ "$output_state" = "connected" ] && ([ "$output_name" != "$laptop_screen_name" ] || [ "$lid_state" = "open" ] || [ $num_active_outputs -eq 0 ] || [ "$layout" = "off" ]); then
