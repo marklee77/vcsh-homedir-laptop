@@ -63,6 +63,7 @@ for output_status in $output_status_list; do
 done
 global_preferred_mode="$(perl -lane 'print $F[0]' <<< "${global_available_modes}")"
 
+# FIXME: whether primary should matter...
 xrandr_options=""
 previous_connected_output=""
 for output_status in $output_status_list; do
