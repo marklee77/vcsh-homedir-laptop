@@ -40,16 +40,13 @@ global_available_modes=""
 num_active_outputs=0
 for output_status in ${output_status_list}; do
     IFS="," read -r output_name output_state output_primary output_mode output_available_modes <<< "${output_status}"
-    #echo "output name: $output_name"
-    #echo "output state: $output_state"
-    #echo "output primary: $output_primary"
-    #echo "output mode: $output_mode"
-    #echo "output available_modes: $output_available_modes"
-    #echo
     if [ "${output_state}" = "connected" ] && [ -n "${output_available_modes}" ] && \
       ([ "${lid_state}" = "open" ] || [ "${output_name}" != "${laptop_screen_name}" ]); then
         num_active_outputs="$((num_active_outputs+1))"
-        if [ $num_active_outputs -eq 1 ]; then
+        output_available_modes="$(sed 's/;+?/\n/g' <<< "${output_available_modes}" | sort)"
+        echo $output_available_modes
+        exit 0
+        if [ -z "${global_available_modes}" ]; then
             global_available_modes=${output_available_modes//[;+]/ }
         else
             temp_available_modes=""
@@ -66,6 +63,7 @@ for output_status in ${output_status_list}; do
     fi
 done
 global_preferred_mode="$(perl -lane 'print $F[0]' <<< "${global_available_modes}")"
+exit 0
 
 # FIXME: whether primary should matter...
 xrandr_options=""
