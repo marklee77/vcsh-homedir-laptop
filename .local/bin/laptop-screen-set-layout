@@ -34,7 +34,7 @@ if [ -n "${layout}" ]; then
     esac
 fi
 
-output_status_list="$(xrandr --current | perl -ane 'if (/(\S+)\s+((?:dis)?connected)\s*((?:primary)?)\s*([^\s(+]*)/) { print "\n$1,$2,$3,$4,"; } elsif (/^\s+(\d+x\d+)\s+[0-9.*]+(\+?)/) { print "$1$2;" };')"
+output_status_list="$(xrandr --current | perl -ane 'if (/(\S+)\s+((?:dis)?connected)\s*((?:primary)?)\s*([^\s(+]*)/) { print "\n$1,$2,$3,$4,"; } elsif (/^\s+(\d+x\d+)\s+[0-9.*]+\+?/) { print "$1;" };')"
 
 global_available_modes=""
 num_active_outputs=0
@@ -43,14 +43,12 @@ for output_status in ${output_status_list}; do
     if [ "${output_state}" = "connected" ] && [ -n "${output_available_modes}" ] && \
       ([ "${lid_state}" = "open" ] || [ "${output_name}" != "${laptop_screen_name}" ]); then
         num_active_outputs="$((num_active_outputs+1))"
-        output_available_modes="$(sed 's/;+?/\n/g' <<< "${output_available_modes}" | sort)"
-        echo $output_available_modes
-        exit 0
+        echo $output_mode
         if [ -z "${global_available_modes}" ]; then
-            global_available_modes=${output_available_modes//[;+]/ }
+            global_available_modes="${output_available_modes}"
         else
             temp_available_modes=""
-            for gmode in $global_available_modes; do
+            for gmode in ${global_available_modes//;/ }; do
                 for omode in ${output_available_modes//[;+]/ }; do
                     if [ "$omode" = "$gmode" ]; then
                         temp_available_modes="$temp_available_modes $omode"
