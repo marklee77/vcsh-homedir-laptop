@@ -18,7 +18,7 @@ export PATH="${scriptdir}:$PATH"
 
 screen_layouts=(mirror left-of right-of)
 
-current_layout=$(cat "${rundir}/layout" 2>/dev/null)
+current_layout="$(cat "${rundir}/layout" 2>/dev/null)"
 [ -z "${current_layout}" ] && current_layout="${screen_layouts[0]}"
 
 if [ "$1" = "--nocycle" ]; then
