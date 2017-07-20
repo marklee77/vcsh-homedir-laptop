@@ -1,47 +1,37 @@
 #!/bin/bash
-scriptname="$(basename $0)"
-
-lockdir="${XDG_RUNTIME_DIR:-${HOME}/.local/var}/${scriptname}.lock"
-pidfile="${lockdir}/PID"
-if mkdir ${lockdir} &> /dev/null; then
-    trap "rm -rf ${lockdir}; exit 0" EXIT SIGHUP SIGINT SIGQUIT SIGTERM
-    echo "$$" > ${pidfile}
-else
-    otherpid=$(cat ${pidfile} 2>/dev/null)
-    othercmd=$(ps --no-headers --format command --pid ${otherpid} 2>/dev/null)
-    if [[ "${othercmd}" =~ .*${scriptname}.* ]]; then
-        echo "another instance of ${scriptname} is currently running." >&2
-        exit 1
-    fi
-    # lock is stale, remove and try again...
-    rm -rf ${lockdir}
-    exec "$0" "$@"
-fi
-
+scriptname="$(basename "${BASH_SOURCE[0]}")"
 rundir="${XDG_RUNTIME_DIR:-${HOME}/.local/var/run}/${scriptname}"
-mkdir -p ${rundir}
-
-scriptdir="$(dirname $0)"
+pidfile="${rundir}/PID"
+cleanup () {
+    rm -f "${pidfile}"
+    flock -u 200
+}
+mkdir -p "${rundir}"
+exec 200>"${pidfile}"
+if ! flock -n 200 || ! echo "$$" > "${pidfile}"; then
+    echo "another instance of the ${scriptname} is currently running..." >&2
+    exit 1
+fi
+trap cleanup EXIT HUP INT QUIT TERM
+scriptdir="$(dirname "${BASH_SOURCE[0]}")"
 export PATH="${scriptdir}:$PATH"
 
 screen_layouts=(mirror left-of right-of)
 
-current_layout=$(cat ${rundir}/layout 2>/dev/null)
-[ -z "${current_layout}" ] && current_layout=${screen_layouts[0]}
+current_layout=$(cat "${rundir}/layout" 2>/dev/null)
+[ -z "${current_layout}" ] && current_layout="${screen_layouts[0]}"
 
 if [ "$1" = "--nocycle" ]; then
     new_layout="${current_layout}"
 else
     i=0
-    for layout in ${screen_layouts[@]}; do
-        i=$((($i + 1) % ${#screen_layouts[@]}))
+    for layout in "${screen_layouts[@]}"; do
+        i="$(((i+1) % ${#screen_layouts[@]}))"
         [ "${layout}" = "${current_layout}" ] && break
     done
-    new_layout=${screen_layouts[$i]}
+    new_layout="${screen_layouts[$i]}"
 fi
-echo $new_layout > ${rundir}/layout
+echo "${new_layout}" > "${rundir}/layout"
 
 pkill -RTMIN+3 i3blocks
-laptop-screen-set-layout ${new_layout}
-
-exit 0
+laptop-screen-set-layout "${new_layout}"
