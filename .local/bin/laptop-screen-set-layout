@@ -40,11 +40,12 @@ global_available_modes=""
 num_active_outputs=0
 for output_status in $output_status_list; do
     IFS="," read -r output_name output_state output_primary output_mode output_available_modes <<< "${output_status}"
-    echo "output name: $output_name"
-    echo "output state: $output_state"
-    echo "output primary: $output_primary"
-    echo "output mode: $output_mode"
-    echo "output available_modes: $output_available_modes"
+    #echo "output name: $output_name"
+    #echo "output state: $output_state"
+    #echo "output primary: $output_primary"
+    #echo "output mode: $output_mode"
+    #echo "output available_modes: $output_available_modes"
+    #echo
     if [ -n "${output_available_modes}" ] && \
        [ "$output_state" = "connected" ] && \
        ([ "$output_name" != "$laptop_screen_name" ] || \
