@@ -34,12 +34,12 @@ if [ -n "${layout}" ]; then
     esac
 fi
 
-output_status_list="$(xrandr --current | perl -ane 'if (/(\S+)\s+((?:dis)?connected)\s*((?:primary)?)\s*([^\s(+]*)/) { print "\n$1,$2,$3,$4,"; } elsif (/^\s+(\d+x\d+)\s+[0-9.*]+\+?/) { print "$1;" };')"
+output_status_list="$(xrandr --current | perl -ane 'if (/(\S+)\s+((?:dis)?connected)\s*(?:primary)?\s*([^\s(+]*)/) { print "\n$1,$2,$3,"; } elsif (/^\s+(\d+x\d+)\s+[0-9.*]+\+?/) { print "$1;" };')"
 
 global_available_modes=""
 num_active_outputs=0
 for output_status in ${output_status_list}; do
-    IFS="," read -r output_name output_state output_primary output_mode output_available_modes <<< "${output_status}"
+    IFS="," read -r output_name output_state output_mode output_available_modes <<< "${output_status}"
     if [ "${output_state}" = "connected" ] && [ -n "${output_available_modes}" ] && \
       ([ "${lid_state}" = "open" ] || [ "${output_name}" != "${laptop_screen_name}" ]); then
         output_available_modes="${output_available_modes//;/ }"
@@ -50,13 +50,13 @@ for output_status in ${output_status_list}; do
             temp_available_modes=""
             for gmode in ${global_available_modes}; do
                 for omode in ${output_available_modes}; do
-                    if [ "$omode" = "$gmode" ]; then
-                        temp_available_modes="$temp_available_modes $omode"
+                    if [ "${omode}" = "${gmode}" ]; then
+                        temp_available_modes="${temp_available_modes} ${omode}"
                         break
                     fi
                 done
             done
-            global_available_modes=$temp_available_modes
+            global_available_modes="${temp_available_modes}"
         fi
     fi
 done
@@ -65,47 +65,46 @@ global_preferred_mode="$(awk '{ print $1 }' <<< "${global_available_modes}")"
 xrandr_options=""
 previous_connected_output=""
 for output_status in $output_status_list; do
-    IFS="," read -r output_name output_state output_primary output_mode output_available_modes <<< "${output_status}"
+    IFS="," read -r output_name output_state output_mode output_available_modes <<< "${output_status}"
     output_available_modes="${output_available_modes//;/ }"
     output_desired_mode="$(awk '{ print $1 }' <<< "${output_available_modes}")"
     output_options=""
-    if [ "$output_state" = "connected" ] && (
-[ "$output_name" != "$laptop_screen_name" ] || [ "$lid_state" = "open" ] || [ $num_active_outputs -eq 0 ] || [ "$layout" = "off" ]); then
-        if [ -z "$previous_connected_output" ]; then
+    if [ "${output_state}" = "connected" ] && ([ "${lid_state}" = "open" ] || [ "${output_name}" != "${laptop_screen_name}" ] || [ "${num_active_outputs}" -eq 0 ] || [ "${layout}" = "off" ]); then
+        if [ -z "${previous_connected_output}" ]; then
             output_options="--primary"
         fi
-        if [ $num_active_outputs -gt 1 ]; then
-            if [ "$layout" = "mirror" ]; then
-                if [ -n "$global_preferred_mode" ]; then
-                    output_desired_mode=$global_preferred_mode
+        if [ "${num_active_outputs}" -gt 1 ]; then
+            if [ "${layout}" = "mirror" ]; then
+                if [ -n "${global_preferred_mode}" ]; then
+                    output_desired_mode="${global_preferred_mode}"
                 fi
-                if [ -n "$previous_connected_output" ]; then
-                    output_options="--same-as $previous_connected_output"
+                if [ -n "${previous_connected_output}" ]; then
+                    output_options="--same-as ${previous_connected_output}"
                 fi
-            elif [ "$layout" = "off" ]; then
-                if [ -n "$output_mode" ] && [ -n "$previous_connected_output" ]; then
+            elif [ "${layout}" = "off" ]; then
+                if [ -n "${output_mode}" ] && [ -n "${previous_connected_output}" ]; then
                     output_options="--off"
                 fi
-            elif [ -n "$layout" ]; then
-                if [ -n "$previous_connected_output" ]; then
-                    output_options="--$layout $previous_connected_output"
+            elif [ -n "${layout}" ]; then
+                if [ -n "${previous_connected_output}" ]; then
+                    output_options="--${layout} ${previous_connected_output}"
                 fi
             fi
         fi
-        if [ "$layout" != "off" ] || [ -z "$previous_connected_output" ]; then
-            output_options="--auto --mode $output_desired_mode $output_options"
+        if [ "${layout}" != "off" ] || [ -z "${previous_connected_output}" ]; then
+            output_options="--auto --mode ${output_desired_mode} ${output_options}"
         fi
-        previous_connected_output=$output_name
-    elif [ -n "$output_mode" ] || [ "$output_name" = "$laptop_screen_name" ]; then
+        previous_connected_output="${output_name}"
+    elif [ -n "${output_mode}" ] || [ "${output_name}" = "${laptop_screen_name}" ]; then
             output_options="--off"
     fi
-    if [ -n "$output_options" ]; then
-        xrandr_options="$xrandr_options --output $output_name $output_options"
+    if [ -n "${output_options}" ]; then
+        xrandr_options="${xrandr_options} --output ${output_name} ${output_options}"
     fi
 done
 
-if [ -n "$xrandr_options" ]; then
-    xrandr_command="$xrandr$xrandr_options"
+if [ -n "${xrandr_options}" ]; then
+    xrandr_command="${xrandr}${xrandr_options}"
     previous_xrandr_command=$(cat "${rundir}/xrandr_command" 2>/dev/null)
     if  [ "$xrandr_command" != "$previous_xrandr_command" ]; then
         echo "$xrandr_command" > "${rundir}/xrandr_command"
