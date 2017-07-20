@@ -42,14 +42,14 @@ for output_status in ${output_status_list}; do
     IFS="," read -r output_name output_state output_primary output_mode output_available_modes <<< "${output_status}"
     if [ "${output_state}" = "connected" ] && [ -n "${output_available_modes}" ] && \
       ([ "${lid_state}" = "open" ] || [ "${output_name}" != "${laptop_screen_name}" ]); then
+        output_available_modes="${output_available_modes//;/ }"
         num_active_outputs="$((num_active_outputs+1))"
-        echo $output_mode
         if [ -z "${global_available_modes}" ]; then
             global_available_modes="${output_available_modes}"
         else
             temp_available_modes=""
-            for gmode in ${global_available_modes//;/ }; do
-                for omode in ${output_available_modes//[;+]/ }; do
+            for gmode in ${global_available_modes}; do
+                for omode in ${output_available_modes}; do
                     if [ "$omode" = "$gmode" ]; then
                         temp_available_modes="$temp_available_modes $omode"
                         break
@@ -60,17 +60,17 @@ for output_status in ${output_status_list}; do
         fi
     fi
 done
-global_preferred_mode="$(perl -lane 'print $F[0]' <<< "${global_available_modes}")"
-exit 0
+global_preferred_mode="$(awk '{ print $1 }' <<< "${global_available_modes}")"
 
-# FIXME: whether primary should matter...
 xrandr_options=""
 previous_connected_output=""
 for output_status in $output_status_list; do
     IFS="," read -r output_name output_state output_primary output_mode output_available_modes <<< "${output_status}"
-    output_desired_mode="$(perl -lane 'if (/(\d+x\d+)\+/) { print $1; } else { print $F[0]; }' <<< "${output_available_modes//;/ }")"
+    output_available_modes="${output_available_modes//;/ }"
+    output_desired_mode="$(awk '{ print $1 }' <<< "${output_available_modes}")"
     output_options=""
-    if [ "$output_state" = "connected" ] && ([ "$output_name" != "$laptop_screen_name" ] || [ "$lid_state" = "open" ] || [ $num_active_outputs -eq 0 ] || [ "$layout" = "off" ]); then
+    if [ "$output_state" = "connected" ] && (
+[ "$output_name" != "$laptop_screen_name" ] || [ "$lid_state" = "open" ] || [ $num_active_outputs -eq 0 ] || [ "$layout" = "off" ]); then
         if [ -z "$previous_connected_output" ]; then
             output_options="--primary"
         fi
