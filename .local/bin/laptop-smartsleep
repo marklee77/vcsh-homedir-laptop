@@ -22,28 +22,23 @@ exit 0
 
 battery_charge_hibernate_percent=5
 sleep_length=+2hour
-battery=BAT0
 
-battery_charge_now="$(cat /sys/class/power_supply/${battery}/charge_now)"
-battery_charge_full="$(cat /sys/class/power_supply/${battery}/charge_full)"
-battery_charge_percent=$((100*battery_charge_now/battery_charge_full))
+battery_energy_now="$(cat /sys/class/power_supply/BAT*/energy_now | paste -sd+ | bc)"
+battery_energy_full="$(cat /sys/class/power_supply/BAT*/energy_full | paste -sd+ | bc)"
+battery_capacity="$((100 * battery_energy_now / battery_energy_full))"
 
-if [ ${battery_charge_percent} -le ${battery_charge_hibernate_percent} ]; then
+if [ "${battery_capacity}" -le "${battery_charge_hibernate_percent}" ]; then
     laptop-hibernate
     exit 0
 fi
 
-wakealarm=/sys/class/rtc/rtc0/wakealarm
-
 rtcwake -m no -t "$(date +%s -d"${sleep_length}")"
+
 laptop-suspend
 
-alarm=$(cat ${wakealarm})
-now=$(date +%s)
-
-if [ -z ${alarm} ] || [ ${now} -ge ${alarm} ]; then
-    xset dpms force off
-    sleep 5
+alarm="$(cat /sys/class/rtc/rtc0/wakealarm 2>/dev/null)"
+if [ -z "${alarm}" ] || [ "${alarm}" -le "$(date +%s)" ]; then
     laptop-hibernate
 fi
-rtcwake -m no -t $(date +%s -d+5seconds)
+
+rtcwake -m no -t "$(date +%s -d+5seconds)"
