@@ -15,5 +15,5 @@ if ! flock -n 200 || ! echo "$$" > "${pidfile}"; then
 fi
 trap cleanup EXIT HUP INT QUIT TERM
 
-xset dpms 5 5 5
+xset dpms 2 2 2
 i3lock -c 002b36 -enf
