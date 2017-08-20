@@ -17,13 +17,15 @@ scriptdir="$(dirname "${BASH_SOURCE[0]}")"
 export PATH="${scriptdir}:$PATH"
 
 prev_network="$(cat "${rundir}/network" 2>/dev/null)"
-curr_network="$((ip a s eth0 ; ip a s wlan0 ; ip a s usb0) | sed -nr '/^\s*inet ([^/]*).*/{s//\1/p;q}')"
+curr_netdev="$(ip r s | awk '$1 == "default" { print $NF }')"
+curr_network="$(ip a s "${curr_netdev}" | sed -nr '/^\s*inet ([^/]*).*/{s//\1/p;q}')"
 
 ssh_procs="$(pgrep -f "^ssh: .*ssh_control_")"
 
 if [ -z "$curr_network" ] || [ "$curr_network" != "$prev_network" ]; then
     for proc in $ssh_procs; do
         if grep -q "^$proc\$" "${rundir}/ssh_procs"; then
+            echo "killing ${proc}..."
             kill "${proc}" 2>/dev/null
         fi
     done
