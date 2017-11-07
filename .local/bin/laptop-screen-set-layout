@@ -19,7 +19,7 @@ export PATH="${scriptdir}:$PATH"
 xrandr="/usr/bin/xrandr"
 
 laptop_screen_name="$(xrandr --current | awk '$2 == "connected" { print $1; exit }')"
-lid_state="$(awk '{ print $2 }' /proc/acpi/button/lid/LID/state)"
+lid_state="$(awk '{ print $2 }' /proc/acpi/button/lid/LID*/state | head -1)"
 layout="$1"
 
 if [ -n "${layout}" ]; then

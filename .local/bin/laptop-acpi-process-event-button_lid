@@ -2,7 +2,7 @@
 scriptdir="$(dirname "${BASH_SOURCE[0]}")"
 export PATH="${scriptdir}:$PATH"
 
-lid_state="$(awk '{ print $2 }' /proc/acpi/button/lid/LID/state)"
+lid_state="$(awk '{ print $2 }' /proc/acpi/button/lid/LID*/state | head -1)"
 connected_screen_count="$(xrandr --current | grep -c " connected")"
 
 if [ "${lid_state}" = "closed" ] && [ "${connected_screen_count}" -eq 1 ]; then
