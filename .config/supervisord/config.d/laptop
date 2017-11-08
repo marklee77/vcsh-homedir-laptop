@@ -3,16 +3,16 @@ command=laptop-acpi-monitor-events
 autorestart=true
 stopsignal=KILL
 
-[program:srandrd]
-command=srandrd -n laptop-acpi-process-event-button_lid
-autorestart=true
+#[program:srandrd]
+#command=srandrd -n laptop-acpi-process-event-button_lid
+#autorestart=true
 
-[program:laptop-check-battery]
-command=runinterval 30 laptop-check-battery
-autorestart=true
-stopsignal=KILL
+#[program:laptop-check-battery]
+#command=runinterval 30 laptop-check-battery
+#autorestart=true
+#stopsignal=KILL
 
-[program:laptop-network-kill-ssh]
-command=runinterval 10 laptop-network-kill-ssh
-autorestart=true
-stopsignal=KILL
+#[program:laptop-network-kill-ssh]
+#command=runinterval 10 laptop-network-kill-ssh
+#autorestart=true
+#stopsignal=KILL

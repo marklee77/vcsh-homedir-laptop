@@ -18,15 +18,15 @@ export PATH="${scriptdir}:$PATH"
 
 current_volume_settings="$(cat "${rundir}/settings" 2>/dev/null)"
 if [ -n "$current_volume_settings" ]; then
-    amixer -q -c 1 set Master "$current_volume_settings"
+    amixer -q -c 0 set Master "$current_volume_settings"
 fi
 
-amixer -q -c 1 set Headphone 100% on
-amixer -q -c 1 set Speaker 100% on
-amixer -q -c 1 set PCM 100% on
+amixer -q -c 0 set Headphone 100% on
+amixer -q -c 0 set Speaker 100% on
+amixer -q -c 0 set PCM 100% on
 
-[ -n "$*" ] && amixer -q -c 1 set Master "$@"
+[ -n "$*" ] && amixer -q -c 0 set Master "$@"
 
-amixer -c 1 get Master | perl -lne 'print "$1 $2" if /^\s*Mono:.*\[(.+%)\].*\[.*\].*\[(.+)\].*/' > "${rundir}/settings"
+amixer -c 0 get Master | perl -lne 'print "$1 $2" if /^\s*Mono:.*\[(.+%)\].*\[.*\].*\[(.+)\].*/' > "${rundir}/settings"
 
 pkill -RTMIN+1 i3blocks
