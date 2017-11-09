@@ -17,5 +17,4 @@ scriptdir="$(dirname "${BASH_SOURCE[0]}")"
 export PATH="${scriptdir}:$PATH"
 
 laptop-lock &
-dbus-send --system --print-reply --dest="org.freedesktop.UPower" \
-    /org/freedesktop/UPower org.freedesktop.UPower.Suspend
+systemctl suspend

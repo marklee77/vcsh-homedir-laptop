@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 scriptdir="$(dirname "${BASH_SOURCE[0]}")"
 export PATH="${scriptdir}:$PATH"
 
