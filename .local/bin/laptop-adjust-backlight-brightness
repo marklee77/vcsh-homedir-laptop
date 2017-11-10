@@ -1,0 +1,70 @@
+#!/bin/bash
+scriptname="$(basename "${BASH_SOURCE[0]}")"
+rundir="${XDG_RUNTIME_DIR:-${HOME}/.local/var/run}/${scriptname}"
+pidfile="${rundir}/PID"
+cleanup () {
+    rm -f "${pidfile}"
+    flock -u 200
+}
+mkdir -p "${rundir}"
+exec 200>"${pidfile}"
+if ! flock -n 200 || ! echo "$$" > "${pidfile}"; then
+    echo "another instance of ${scriptname} is currently running..." >&2
+    exit 1
+fi
+trap cleanup EXIT HUP INT QUIT TERM
+scriptdir="$(dirname "${BASH_SOURCE[0]}")"
+export PATH="${scriptdir}:$PATH"
+
+backlight_brightness_sys_file="/sys/class/backlight/intel_backlight/brightness"
+backlight_curr_brightness="$(cat "${backlight_brightness_sys_file}")"
+backlight_max_brightness="$(cat /sys/class/backlight/intel_backlight/max_brightness)"
+
+adj="$1"
+
+[ -n "$adj" ] || exit 0
+
+op="set"
+case "${1:0:1}" in
+    +)
+        op="add"
+        level="${adj:1}"
+        ;;
+    -)
+        op="sub"
+        level="${adj:1}"
+        ;;
+     =)
+        level="${adj:1}"
+        ;;
+     *)
+        level="${adj}"
+        ;;
+esac
+
+if [ "${level: -1}" = "%" ]; then
+    pct="${level%%%}"
+    level="$((backlight_max_brightness*pct/100))"
+fi
+
+case "${op}" in
+    add)
+        level="$((backlight_curr_brightness+level))"
+        ;;
+    sub)
+        level="$((backlight_curr_brightness-level))"
+        ;;
+    *)
+        ;;
+esac
+
+if [ "${level}" -gt "${backlight_max_brightness}" ]; then
+    level="${backlight_max_brightness}"
+fi
+
+if [ "${level}" -lt 0 ]; then
+    level="0"
+fi
+
+echo "${level}" >"${backlight_brightness_sys_file}"
+pkill -RTMIN+2 i3blocks
