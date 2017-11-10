@@ -2,6 +2,7 @@
 command=laptop-acpi-monitor-events
 autorestart=true
 stopsignal=KILL
+stopasgroup=true
 
 [program:srandrd]
 command=srandrd -n laptop-acpi-process-event-button_lid

@@ -9,7 +9,7 @@ cleanup () {
 mkdir -p "${rundir}"
 exec 200>"${pidfile}"
 if ! flock -n 200 || ! echo "$$" > "${pidfile}"; then
-    echo "another instance of the ${scriptname} is currently running..." >&2
+    echo "another instance of ${scriptname} is currently running..." >&2
     exit 1
 fi
 trap cleanup EXIT HUP INT QUIT TERM
@@ -20,17 +20,16 @@ acpi_listen | while read -r event params; do
     echo "$(date): (${event}: ${params})"
     case "${event}" in
         button/lid)
-        laptop-acpi-process-event-button_lid &
+        laptop-acpi-process-event-button_lid
         ;;
         button/power)
-        laptop-acpi-process-event-button_power &
+        laptop-acpi-process-event-button_power
         ;;
         battery|ac_adapter)
-        laptop-acpi-process-event-button_lid &
-        laptop-check-battery &
+        laptop-check-battery
         ;;
         jack/*)
-        laptop-volume-set off &
+        laptop-volume-set off
         ;;
     esac
 done
