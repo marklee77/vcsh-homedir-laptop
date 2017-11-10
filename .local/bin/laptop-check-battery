@@ -21,9 +21,8 @@ sleep_capacity=2
 
 pkill -RTMIN+6 i3blocks
 
-battery_energy_now="$(cat /sys/class/power_supply/BAT*/energy_now | paste -sd+ | bc)"
-battery_energy_full="$(cat /sys/class/power_supply/BAT*/energy_full | paste -sd+ | bc)"
-battery_capacity="$((100 * battery_energy_now / battery_energy_full))"
+# get maximum capacity if multiple batteries
+battery_capacity="$(cat /sys/class/power_supply/BAT*/capacity | sort -n | tail -1)"
 
 if ! on_ac_power; then
     if [ "${battery_capacity}" -le "${sleep_capacity}" ]; then
@@ -35,7 +34,7 @@ if ! on_ac_power; then
     elif [ "${battery_capacity}" -le "${warn_capacity}" ]; then
         prev_warn_time="$(cat "${rundir}/warn_time" 2>/dev/null)"
         curr_warn_time="$(date +%s)"
-        if [ -z "$prev_warn_time" ] || [ "$((curr_warn_time - prev_warn_time))" -ge 30 ]; then
+        if [ -z "$prev_warn_time" ] || [ "$((curr_warn_time - prev_warn_time))" -ge 300 ]; then
             notify-send --urgency=critical \
                 "Low Battery Warning!" \
                 "The battery charge is critically low. Please connect to AC power."
