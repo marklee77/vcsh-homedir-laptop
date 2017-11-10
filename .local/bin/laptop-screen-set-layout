@@ -104,7 +104,7 @@ if [ -n "${xrandr_options}" ]; then
     previous_xrandr_command=$(cat "${rundir}/xrandr_command" 2>/dev/null)
     if  [ "${xrandr_command}" != "${previous_xrandr_command}" ]; then
         echo "${xrandr_command}" > "${rundir}/xrandr_command"
-        echo ${xrandr_command}
+        ${xrandr_command}
         laptop-set-background
         laptop-keyboard-set-layout
     fi

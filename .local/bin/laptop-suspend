@@ -17,4 +17,10 @@ scriptdir="$(dirname "${BASH_SOURCE[0]}")"
 export PATH="${scriptdir}:$PATH"
 
 laptop-lock &
+date
+sleep 1
 systemctl suspend
+for x in {1..5}; do
+    date
+    sleep 1
+done
