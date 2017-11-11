@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 scriptname="$(basename "${BASH_SOURCE[0]}")"
 rundir="${XDG_RUNTIME_DIR:-${HOME}/.local/var/run}/${scriptname}"
 pidfile="${rundir}/PID"
@@ -18,3 +18,4 @@ export PATH="${scriptdir}:$PATH"
 
 laptop-lock &
 systemctl hibernate
+sleep 5

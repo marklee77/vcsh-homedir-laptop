@@ -16,9 +16,8 @@ trap cleanup EXIT HUP INT QUIT TERM
 scriptdir="$(dirname "${BASH_SOURCE[0]}")"
 export PATH="${scriptdir}:$PATH"
 
-battery_charge_hibernate_percent=5
+battery_charge_hibernate_percent=10
 sleep_length=+2hour
-sleep_length=+1minute
 
 battery_capacity="$(cat /sys/class/power_supply/BAT*/capacity | sort -n | tail -1)"
 
