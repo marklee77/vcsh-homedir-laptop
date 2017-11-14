@@ -17,7 +17,7 @@ scriptdir="$(dirname "${BASH_SOURCE[0]}")"
 export PATH="${scriptdir}:$PATH"
 
 # disable temporarily because displaylink is being a pain
-exit 0
+#exit 0
 
 xrandr="/usr/bin/xrandr"
 
