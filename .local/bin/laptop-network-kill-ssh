@@ -17,7 +17,7 @@ scriptdir="$(dirname "${BASH_SOURCE[0]}")"
 export PATH="${scriptdir}:$PATH"
 
 prev_network="$(cat "${rundir}/network" 2>/dev/null)"
-curr_netdev="$(ip r s | awk '$1 == "default" { print $NF }')"
+curr_netdev="$(ip r s | sed -nr '/^default\s.*\sdev\s(\S+).*/{s//\1/p;q}')"
 curr_network="$(ip a s "${curr_netdev}" | sed -nr '/^\s*inet ([^/]*).*/{s//\1/p;q}')"
 
 ssh_procs="$(pgrep -f "^ssh: .*ssh_control_")"
